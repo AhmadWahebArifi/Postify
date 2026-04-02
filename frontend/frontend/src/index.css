@@ -51,6 +51,19 @@ body {
   background: linear-gradient(135deg, #4f46e5 0%, #3525cd 100%);
 }
 
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
     --text: #9ca3af;
