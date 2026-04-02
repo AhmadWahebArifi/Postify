@@ -2,19 +2,31 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import API from '../api'
+import Swal from 'sweetalert2'
 import './Login.css'
 
 export default function Login() {
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [username, setUsername] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [isRegistering, setIsRegistering] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!email || !password || (isRegistering && !username)) return
+    if (!email || !password || (isRegistering && (!username || !confirmPassword))) return
+
+    if (isRegistering && password !== confirmPassword) {
+      await Swal.fire({
+        icon: 'error',
+        title: 'Passwords do not match',
+        text: 'Please make sure your password and confirm password fields are identical.',
+        confirmButtonColor: '#6366f1'
+      })
+      return
+    }
 
     setIsLoading(true)
     
@@ -29,6 +41,14 @@ export default function Login() {
           username: res.data.username,
           email 
         }))
+
+        await Swal.fire({
+          icon: 'success',
+          title: 'Account Created!',
+          text: 'Welcome to Postify, ' + res.data.username + '!',
+          timer: 2000,
+          showConfirmButton: false
+        })
       } else {
         // Login existing user
         const res = await axios.post(`${API}/login`, { email, password })
@@ -39,6 +59,14 @@ export default function Login() {
           username: res.data.username,
           email 
         }))
+
+        await Swal.fire({
+          icon: 'success',
+          title: 'Welcome Back!',
+          text: 'You have successfully logged in.',
+          timer: 1500,
+          showConfirmButton: false
+        })
       }
       
       setIsLoading(false)
@@ -46,20 +74,17 @@ export default function Login() {
     } catch (error: any) {
       console.error('Auth failed:', error)
       
-      // If backend fails, use mock auth for demo
-      if (error?.response?.status >= 500 || !error?.response) {
-        const mockUser = {
-          id: 'mock-user-id', 
-          username: username || email.split('@')[0],
-          email 
-        }
-        localStorage.setItem('token', 'mock-token-' + Date.now())
-        localStorage.setItem('user', JSON.stringify(mockUser))
-        console.log('Backend unavailable - using demo mode')
-        navigate('/')
-      } else {
-        console.error('Authentication failed:', error?.response?.data?.message || error?.response?.data || 'Authentication failed')
-      }
+      const errorMessage = error?.response?.data?.message || 
+                          error?.response?.data || 
+                          'Something went wrong. Please try again.'
+
+      await Swal.fire({
+        icon: 'error',
+        title: 'Authentication Failed',
+        text: errorMessage,
+        confirmButtonColor: '#6366f1'
+      })
+
       setIsLoading(false)
     }
   }
@@ -129,9 +154,26 @@ export default function Login() {
               />
             </div>
 
+            {isRegistering && (
+              <div className="form-group">
+                <label htmlFor="confirmPassword" className="form-label">
+                  Confirm Password
+                </label>
+                <input
+                  id="confirmPassword"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="form-input"
+                  placeholder="Confirm your password"
+                  required={isRegistering}
+                />
+              </div>
+            )}
+
             <button
               type="submit"
-              disabled={isLoading || !email || !password || (isRegistering && !username)}
+              disabled={isLoading || !email || !password || (isRegistering && (!username || !confirmPassword))}
               className="submit-button"
             >
               {isLoading ? (
