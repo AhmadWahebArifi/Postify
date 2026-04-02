@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import API from '../api';
 import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 const Login = () => {
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
@@ -13,7 +15,7 @@ const Login = () => {
       const res = await axios.post(`${API}/login`, { email, password });
       localStorage.setItem("token", res.data.token);
       console.log('Login successful:', res.data);
-      // TODO: Redirect to feed page
+      navigate('/feed');
     } catch (error) {
       console.error('Login failed:', error);
       alert('Login failed. Please check your credentials.');
