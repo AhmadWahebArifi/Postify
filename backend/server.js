@@ -2,6 +2,8 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const { URL } = require("url");
+const authRoutes = require("./routes/auth");
+const postsRoutes = require("./routes/posts");
 
 require("dotenv").config({ path: '.env.local' });
 
