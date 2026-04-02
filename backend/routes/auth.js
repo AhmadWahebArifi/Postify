@@ -5,26 +5,46 @@ const jwt = require("jsonwebtoken");
 
 // Register
 router.post("/register", async (req, res) => {
-  const hashed = await bcrypt.hash(req.body.password, 10);
-  const user = new User({
-    email: req.body.email,
-    password: hashed,
-  });
-  await user.save();
-  res.json("User created");
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) return res.status(400).json("Missing fields");
+
+    const existing = await User.findOne({ email });
+    if (existing) return res.status(400).json("Email already exists");
+
+    const hashed = await bcrypt.hash(password, 10);
+    const user = new User({
+      email,
+      password: hashed,
+    });
+    await user.save();
+
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
+    res.json({ token, userId: user._id });
+  } catch (err) {
+    res.status(500).json("Server error");
+  }
 });
 
 // Login
 router.post("/login", async (req, res) => {
-  const user = await User.findOne({ email: req.body.email });
+  try {
+    const { email, password } = req.body;
 
-  if (!user) return res.status(400).json("User not found");
+    if (!email || !password) return res.status(400).json("Missing fields");
 
-  const valid = await bcrypt.compare(req.body.password, user.password);
-  if (!valid) return res.status(400).json("Wrong password");
+    const user = await User.findOne({ email });
+    if (!user) return res.status(400).json("User not found");
 
-  const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
-  res.json({ token });
+    const valid = await bcrypt.compare(password, user.password);
+    if (!valid) return res.status(400).json("Wrong password");
+
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
+    res.json({ token, userId: user._id });
+  } catch (err) {
+    res.status(500).json("Server error");
+  }
 });
 
 module.exports = router;
