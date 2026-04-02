@@ -24,6 +24,23 @@ export default function CreatePost() {
 
     setIsSubmitting(true)
     
+    // Create new post object
+    const newPost = {
+      id: Date.now().toString(),
+      content,
+      image: selectedImage,
+      author: {
+        name: 'Your Name',
+        avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCggTpFIL8KvpnYNPuxFANvscDLzSyx0epIZE19Y6pTbg8IA2l_UEfkwg2C33CpXaf4gd1uJ6euWNHtJVaVEciZTBAPsdbFWe0kIB32MqJ0Asx3K9Klwikmb7q8sjjbqH-7sFdhi318YCQ88dJo8uuwvSl71xtHiy_f_c33jgSJREE-ajXjyKZmLlTrLj2ZL3w1nrp4hqMGgjV2ggDVgGTM5nIxxbf7MygLAtrEr9Z9SvQLZ_fII38x_G4xCrx3NliW49U8UV2K4CQ'
+      },
+      timestamp: 'Just now',
+      likes: 0,
+      comments: 0
+    }
+    
+    // Save to localStorage for demo purposes
+    localStorage.setItem('newPost', JSON.stringify(newPost))
+    
     // Simulate API call
     setTimeout(() => {
       setIsSubmitting(false)
@@ -41,7 +58,7 @@ export default function CreatePost() {
             className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
           >
             <span className="material-symbols-outlined">arrow_back</span>
-            <span>Back to Feed</span>
+            <span>Back to Home</span>
           </button>
           <h1 className="text-xl font-semibold">Create Post</h1>
           <div className="w-16"></div>
