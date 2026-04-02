@@ -16,6 +16,7 @@ const postSchema = new mongoose.Schema({
       userId: String,
       username: String,
       text: String,
+      createdAt: { type: Date, default: Date.now }
     }
   ],
 }, { timestamps: true });
