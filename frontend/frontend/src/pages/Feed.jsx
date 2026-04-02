@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import API from '../api';
+import { Link } from 'react-router-dom';
 
 const Feed = () => {
   const [posts, setPosts] = useState([]);
@@ -23,6 +24,10 @@ const Feed = () => {
     e.preventDefault();
     try {
       const token = localStorage.getItem('token');
+      if (!token) {
+        alert('Please login first');
+        return;
+      }
       await axios.post(`${API}/posts`, newPost, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -36,9 +41,11 @@ const Feed = () => {
   const handleLike = async (postId) => {
     try {
       const token = localStorage.getItem('token');
-      // You'll need to get userId from token or user context
-      const userId = 'current-user-id'; // TODO: Get from auth context or decode JWT
-      await axios.put(`${API}/like/${postId}`, { userId }, {
+      if (!token) {
+        alert('Please login first');
+        return;
+      }
+      await axios.put(`${API}/like/${postId}`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
       fetchPosts();
@@ -50,10 +57,11 @@ const Feed = () => {
   const handleComment = async (postId, commentText) => {
     try {
       const token = localStorage.getItem('token');
-      // You'll need to get userId from token or user context
-      const userId = 'current-user-id'; // TODO: Get from auth context or decode JWT
+      if (!token) {
+        alert('Please login first');
+        return;
+      }
       await axios.post(`${API}/comment/${postId}`, {
-        userId,
         text: commentText
       }, {
         headers: { Authorization: `Bearer ${token}` }
@@ -67,7 +75,15 @@ const Feed = () => {
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-2xl mx-auto">
-        <h1 className="text-3xl font-bold mb-6">Feed</h1>
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-3xl font-bold">Feed</h1>
+          <Link
+            to="/create-post"
+            className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+          >
+            Create Post
+          </Link>
+        </div>
         
         {/* Create Post Form */}
         <form onSubmit={handleCreatePost} className="bg-white rounded-lg shadow-md p-6 mb-6">
