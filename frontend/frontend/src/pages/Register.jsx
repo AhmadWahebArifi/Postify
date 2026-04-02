@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import API from '../api';
+import Swal from 'sweetalert2';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -11,21 +12,109 @@ const Register = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
+  const validateForm = () => {
+    if (!username.trim()) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Username Required',
+        text: 'Please enter a username.',
+        confirmButtonColor: '#6366f1',
+      });
+      return false;
+    }
+
+    if (!email.trim()) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Email Required',
+        text: 'Please enter your email address.',
+        confirmButtonColor: '#6366f1',
+      });
+      return false;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Invalid Email',
+        text: 'Please enter a valid email address.',
+        confirmButtonColor: '#6366f1',
+      });
+      return false;
+    }
+
+    if (!password.trim()) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Password Required',
+        text: 'Please enter a password.',
+        confirmButtonColor: '#6366f1',
+      });
+      return false;
+    }
+
+    if (password !== confirmPassword) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Passwords Do Not Match',
+        text: 'Please make sure both passwords match.',
+        confirmButtonColor: '#6366f1',
+      });
+      return false;
+    }
+
+    return true;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (password !== confirmPassword) {
-      alert('Passwords do not match');
-      return;
-    }
+    if (!validateForm()) return;
+
+    Swal.fire({
+      title: 'Creating your account...',
+      text: 'Please wait',
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+      showConfirmButton: false,
+      didOpen: () => {
+        Swal.showLoading();
+      },
+    });
 
     try {
       const res = await axios.post(`${API}/register`, { username, email, password });
       localStorage.setItem('token', res.data.token);
       localStorage.setItem('username', res.data.username);
-      navigate('/feed');
+      localStorage.setItem(
+        'user',
+        JSON.stringify({
+          id: res.data.userId,
+          userId: res.data.userId,
+          username: res.data.username,
+          email,
+        })
+      );
+      Swal.fire({
+        icon: 'success',
+        title: 'Account Created!',
+        text: `Welcome, ${res.data.username}!`,
+        timer: 2000,
+        timerProgressBar: true,
+        showConfirmButton: false,
+        willClose: () => {
+          navigate('/feed');
+        },
+      });
     } catch (error) {
       console.error('Register failed:', error);
-      alert('Register failed. Try a different email.');
+      Swal.fire({
+        icon: 'error',
+        title: 'Registration Failed',
+        text: error.response?.data?.message || 'Register failed. Try a different email.',
+        confirmButtonColor: '#6366f1',
+        confirmButtonText: 'Try Again',
+      });
     }
   };
 
