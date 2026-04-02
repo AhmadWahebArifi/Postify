@@ -16,7 +16,12 @@ export default function CreatePost() {
     if (file) {
       // Check file size (limit to 10MB now)
       if (file.size > 10 * 1024 * 1024) {
-        alert('Image size must be less than 10MB')
+        Swal.fire({
+          icon: 'error',
+          title: 'Image Too Large',
+          text: 'Image size must be less than 10MB',
+          confirmButtonColor: '#6366f1'
+        })
         return
       }
       

@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import API from '../api'
 import SpinLoader from './SpinLoader'
+import Swal from 'sweetalert2'
 import './LandingPage.css'
 
 interface Post {
@@ -78,7 +79,12 @@ function PostCard({ post, onUpdate }: { post: Post; onUpdate: () => void }) {
     try {
       const token = localStorage.getItem('token')
       if (!token) {
-        alert('Please login to like posts')
+        Swal.fire({
+          icon: 'warning',
+          title: 'Authentication Required',
+          text: 'Please login to like posts',
+          confirmButtonColor: '#6366f1'
+        })
         return
       }
 
@@ -120,7 +126,12 @@ function PostCard({ post, onUpdate }: { post: Post; onUpdate: () => void }) {
     try {
       const token = localStorage.getItem('token')
       if (!token) {
-        alert('Please login to comment')
+        Swal.fire({
+          icon: 'warning',
+          title: 'Authentication Required',
+          text: 'Please login to comment',
+          confirmButtonColor: '#6366f1'
+        })
         return
       }
 
@@ -173,9 +184,39 @@ function PostCard({ post, onUpdate }: { post: Post; onUpdate: () => void }) {
     try {
       const token = localStorage.getItem('token')
       if (!token) {
-        alert('Please login to delete comments')
+        Swal.fire({
+          icon: 'warning',
+          title: 'Authentication Required',
+          text: 'Please login to delete comments',
+          confirmButtonColor: '#6366f1'
+        })
         return
       }
+
+      // Show confirmation dialog
+      const result = await Swal.fire({
+        title: 'Delete Comment?',
+        text: 'Are you sure you want to delete this comment? This action cannot be undone.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#ef4444',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Yes, delete it!',
+        cancelButtonText: 'Cancel'
+      })
+
+      if (!result.isConfirmed) return
+
+      // Show loading
+      Swal.fire({
+        title: 'Deleting...',
+        text: 'Please wait',
+        allowOutsideClick: false,
+        showConfirmButton: false,
+        didOpen: () => {
+          Swal.showLoading()
+        }
+      })
 
       await axios.delete(`${API}/comment/${post.id}/${commentIndex}`, {
         headers: { Authorization: `Bearer ${token}` }
@@ -187,9 +228,24 @@ function PostCard({ post, onUpdate }: { post: Post; onUpdate: () => void }) {
       
       // Update parent to refresh posts
       onUpdate()
+
+      // Show success
+      Swal.fire({
+        icon: 'success',
+        title: 'Deleted!',
+        text: 'Comment has been deleted.',
+        timer: 1500,
+        showConfirmButton: false,
+        timerProgressBar: true
+      })
     } catch (error) {
       console.error('Failed to delete comment:', error)
-      alert('Failed to delete comment')
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Failed to delete comment. Please try again.',
+        confirmButtonColor: '#6366f1'
+      })
     }
   }
 
@@ -213,7 +269,14 @@ function PostCard({ post, onUpdate }: { post: Post; onUpdate: () => void }) {
     } else {
       // Fallback: copy to clipboard
       navigator.clipboard.writeText(`${post.content} - ${window.location.href}`)
-      alert('Post link copied to clipboard!')
+      Swal.fire({
+        icon: 'success',
+        title: 'Copied!',
+        text: 'Post link copied to clipboard!',
+        timer: 1500,
+        showConfirmButton: false,
+        timerProgressBar: true
+      })
     }
   }
 

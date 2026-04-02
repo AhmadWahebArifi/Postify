@@ -16,6 +16,7 @@ const Feed = () => {
     try {
       const res = await axios.get(`${API}/posts`);
       setPosts(res.data);
+      console.log('Fetched posts:', res.data);
     } catch (error) {
       console.error('Failed to fetch posts:', error);
     }

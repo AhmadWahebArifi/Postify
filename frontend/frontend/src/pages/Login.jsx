@@ -121,38 +121,37 @@ const Login = () => {
   };
 
   return (
-    <div className="bg-surface text-on-surface min-h-screen flex items-center justify-center auth-gradient p-6">
+    <div className="bg-surface text-on-surface min-h-screen flex items-center justify-center auth-gradient px-4 py-6 sm:px-6 sm:py-8">
       {/* Atmospheric Elements */}
-      <div className="fixed top-20 left-20 w-64 h-64 bg-primary-fixed/20 rounded-full blur-[120px] -z-10 sm:block hidden"></div>
-      <div className="fixed bottom-20 right-20 w-80 h-80 bg-tertiary-fixed/20 rounded-full blur-[140px] -z-10 sm:block hidden"></div>
+      <div className="fixed top-20 left-4 sm:left-20 w-32 h-32 sm:w-64 sm:h-64 bg-primary-fixed/20 rounded-full blur-[80px] sm:blur-[120px] -z-10 hidden sm:block"></div>
+      <div className="fixed bottom-20 right-4 sm:right-20 w-40 h-40 sm:w-80 sm:h-80 bg-tertiary-fixed/20 rounded-full blur-[100px] sm:blur-[140px] -z-10 hidden sm:block"></div>
 
       {/* Main Authentication Container */}
-      <main className="w-full max-w-[440px] z-10">
+      <main className="w-full max-w-[420px] sm:max-w-[440px] z-10 mx-auto">
         {/* Header Branding */}
-        <div className="mb-8 sm:mb-10 text-center">
-          <div className="inline-flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 bg-primary rounded-xl mb-3 sm:mb-4 shadow-lg shadow-primary/20">
-            <span className="material-symbols-outlined text-on-primary text-2xl sm:text-3xl" data-weight="fill" style={{ fontVariationSettings: "'FILL' 1" }}>
+        <div className="mb-6 sm:mb-8 text-center">
+          <div className="inline-flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 bg-primary rounded-xl mb-2 sm:mb-3 lg:mb-4 shadow-lg shadow-primary/20">
+            <span className="material-symbols-outlined text-on-primary text-xl sm:text-2xl lg:text-3xl" data-weight="fill" style={{ fontVariationSettings: "'FILL' 1" }}>
               auto_awesome
             </span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tighter text-on-background mb-2">Postify</h1>
-          <p className="text-on-surface-variant body-md font-medium text-sm sm:text-base">Welcome back to your workspace</p>
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold tracking-tighter text-on-background mb-2">Postify</h1>
+          <p className="text-on-surface-variant body-md font-medium text-xs sm:text-sm lg:text-base">Welcome back to your workspace</p>
         </div>
 
         {/* Login Card */}
-        <div className="surface-container-lowest glass-effect rounded-xl shadow-[0_12px_40px_-12px_rgba(25,28,30,0.08)] p-6 sm:p-8 lg:p-10 border border-outline-variant/10">
+        <div className="surface-container-lowest glass-effect rounded-xl shadow-[0_12px_40px_-12px_rgba(25,28,30,0.08)] p-4 sm:p-6 lg:p-8 border border-outline-variant/10">
           <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-6">
-            {/* Email Field */}
             <div className="space-y-2">
               <label className="block text-xs font-bold tracking-widest text-on-surface-variant uppercase pl-1" htmlFor="email">
                 Email Address
               </label>
               <div className="relative">
-                <span className="material-symbols-outlined absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-outline text-lg sm:text-xl">
+                <span className="material-symbols-outlined absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-outline text-base sm:text-lg lg:text-xl">
                   alternate_email
                 </span>
                 <input
-                  className="w-full pl-10 sm:pl-12 pr-4 py-3 bg-surface-container-low border border-outline-variant/20 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none text-on-surface placeholder:text-outline/60 text-sm sm:text-base"
+                  className="w-full pl-9 sm:pl-11 lg:pl-12 pr-4 py-3 bg-surface-container-low border border-outline-variant/20 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none text-on-surface placeholder:text-outline/60 text-sm sm:text-base"
                   id="email"
                   type="email"
                   placeholder="name@company.com"
@@ -174,11 +173,11 @@ const Login = () => {
                 </a>
               </div>
               <div className="relative">
-                <span className="material-symbols-outlined absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-outline text-lg sm:text-xl">
+                <span className="material-symbols-outlined absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-outline text-base sm:text-lg lg:text-xl">
                   lock
                 </span>
                 <input
-                  className="w-full pl-10 sm:pl-12 pr-4 py-3 bg-surface-container-low border border-outline-variant/20 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none text-on-surface placeholder:text-outline/60 text-sm sm:text-base"
+                  className="w-full pl-9 sm:pl-11 lg:pl-12 pr-4 py-3 bg-surface-container-low border border-outline-variant/20 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none text-on-surface placeholder:text-outline/60 text-sm sm:text-base"
                   id="password"
                   type="password"
                   placeholder="••••••••"
@@ -231,16 +230,15 @@ const Login = () => {
           </div>
         </div>
 
-        {/* Footer Links */}
-        <p className="mt-6 sm:mt-8 text-center text-on-surface-variant body-md font-medium text-sm sm:text-base">
-          Don't have an account? 
-          <Link className="text-primary font-bold hover:underline decoration-2 underline-offset-4 ml-1" to="/register">
-            Create one
-          </Link>
-        </p>
+          <p className="mt-4 sm:mt-6 lg:mt-8 text-center text-on-surface-variant body-md font-medium text-xs sm:text-sm lg:text-base">
+            Don't have an account? 
+            <Link className="text-primary font-bold hover:underline decoration-2 underline-offset-4 ml-1" to="/register">
+              Create one
+            </Link>
+          </p>
 
         {/* Support/Legal */}
-        <div className="mt-12 sm:mt-16 flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 text-[10px] font-bold uppercase tracking-widest text-outline">
+        <div className="mt-8 sm:mt-10 lg:mt-12 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 lg:gap-6 text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-outline">
           <a className="hover:text-primary transition-colors" href="#">Privacy Policy</a>
           <span className="w-1 h-1 bg-outline-variant rounded-full hidden sm:block"></span>
           <a className="hover:text-primary transition-colors" href="#">Terms of Service</a>
