@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import API from '../api';
 import { Link } from 'react-router-dom';
+import PostCard from '../components/PostCard';
 
 const Feed = () => {
   const [posts, setPosts] = useState([]);
-  const [newPost, setNewPost] = useState({ text: '', image: '' });
 
   useEffect(() => {
     fetchPosts();
@@ -20,24 +20,6 @@ const Feed = () => {
     }
   };
 
-  const handleCreatePost = async (e) => {
-    e.preventDefault();
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        alert('Please login first');
-        return;
-      }
-      await axios.post(`${API}/posts`, newPost, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setNewPost({ text: '', image: '' });
-      fetchPosts();
-    } catch (error) {
-      console.error('Failed to create post:', error);
-    }
-  };
-
   const handleLike = async (postId) => {
     try {
       const token = localStorage.getItem('token');
@@ -45,10 +27,11 @@ const Feed = () => {
         alert('Please login first');
         return;
       }
-      await axios.put(`${API}/like/${postId}`, {}, {
+      const res = await axios.put(`${API}/like/${postId}`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      fetchPosts();
+      const updated = res.data;
+      setPosts((prev) => prev.map((p) => (p._id === updated._id ? updated : p)));
     } catch (error) {
       console.error('Failed to like post:', error);
     }
@@ -61,12 +44,13 @@ const Feed = () => {
         alert('Please login first');
         return;
       }
-      await axios.post(`${API}/comment/${postId}`, {
+      const res = await axios.post(`${API}/comment/${postId}`, {
         text: commentText
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      fetchPosts();
+      const updated = res.data;
+      setPosts((prev) => prev.map((p) => (p._id === updated._id ? updated : p)));
     } catch (error) {
       console.error('Failed to add comment:', error);
     }
@@ -84,81 +68,11 @@ const Feed = () => {
             Create Post
           </Link>
         </div>
-        
-        {/* Create Post Form */}
-        <form onSubmit={handleCreatePost} className="bg-white rounded-lg shadow-md p-6 mb-6">
-          <textarea
-            className="w-full p-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="What's on your mind?"
-            rows={3}
-            value={newPost.text}
-            onChange={(e) => setNewPost({ ...newPost, text: e.target.value })}
-          />
-          <input
-            className="w-full p-3 mt-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            type="text"
-            placeholder="Image URL (optional)"
-            value={newPost.image}
-            onChange={(e) => setNewPost({ ...newPost, image: e.target.value })}
-          />
-          <button
-            className="mt-3 bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors"
-            type="submit"
-          >
-            Post
-          </button>
-        </form>
 
         {/* Posts List */}
         <div className="space-y-6">
           {posts.map((post) => (
-            <div key={post._id} className="bg-white rounded-lg shadow-md p-6">
-              {/* Post Text */}
-              <p className="text-gray-800 mb-4">{post.text}</p>
-              
-              {/* Post Image */}
-              {post.image && (
-                <img 
-                  src={post.image} 
-                  alt="Post" 
-                  className="w-full rounded-lg mb-4"
-                />
-              )}
-
-              {/* Post Actions */}
-              <div className="flex items-center gap-6 mb-4">
-                <button
-                  onClick={() => handleLike(post._id)}
-                  className="flex items-center gap-2 text-gray-600 hover:text-red-500 transition-colors"
-                >
-                  <span className="material-symbols-outlined">
-                    favorite
-                  </span>
-                  <span>{post.likes?.length || 0}</span>
-                </button>
-                
-                <div className="flex items-center gap-2 text-gray-600">
-                  <span className="material-symbols-outlined">
-                    comment
-                  </span>
-                  <span>{post.comments?.length || 0}</span>
-                </div>
-              </div>
-
-              {/* Comments Section */}
-              {post.comments && post.comments.length > 0 && (
-                <div className="border-t pt-4">
-                  <h3 className="font-semibold mb-3">Comments</h3>
-                  <div className="space-y-2">
-                    {post.comments.map((comment, index) => (
-                      <div key={index} className="bg-gray-50 rounded-lg p-3">
-                        <p className="text-gray-800">{comment.text}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
+            <PostCard key={post._id} post={post} onLike={handleLike} onComment={handleComment} />
           ))}
         </div>
       </div>
