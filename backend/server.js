@@ -9,6 +9,8 @@ require("dotenv").config({ path: '.env.local' });
 console.log('Environment check:');
 console.log('MONGODB_URI:', process.env.MONGODB_URI ? 'SET' : 'NOT SET');
 console.log('JWT_SECRET:', process.env.JWT_SECRET ? 'SET' : 'NOT SET');
+console.log('PORT:', process.env.PORT || '5000');
+console.log('NODE_ENV:', process.env.NODE_ENV || 'development');
 
 const app = express();
 app.use(cors());
@@ -58,6 +60,15 @@ app.get("/", (req, res) => {
   res.json({ message: "Postify API running" });
 });
 
+// Health check endpoint for Render
+app.get("/health", (req, res) => {
+  res.status(200).json({ 
+    status: "OK", 
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime()
+  });
+});
+
 app.get("/test", (req, res) => {
   res.json({ 
     message: "API test successful",
@@ -81,4 +92,5 @@ app.use((req, res) => {
   res.status(404).json({ error: "Route not found", path: req.path });
 });
 
-app.listen(5000, () => console.log("Server running"));
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
