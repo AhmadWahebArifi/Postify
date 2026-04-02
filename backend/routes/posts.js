@@ -72,24 +72,43 @@ router.get("/posts", async (req, res) => {
 });
 
 // Like Post
-router.put("/posts/like/:id", auth, async (req, res) => {
+router.put("/like/:id", auth, async (req, res) => {
   try {
+    console.log('PUT /like/:id - Liking post:', req.params.id);
+    console.log('User ID:', req.userId);
     const post = await Post.findById(req.params.id);
     if (!post) return res.status(404).json("Post not found");
 
-    const user = await User.findById(req.userId);
-    if (!user) return res.status(401).json("User not found");
+    console.log('Current likes count:', post.likes?.length || 0);
+    console.log('Current likes:', post.likes);
 
-    const likeIndex = (post.likes || []).findIndex((l) => l.userId === req.userId);
-    if (likeIndex === -1) {
-      post.likes.push({ userId: req.userId, username: user.username });
+    let user;
+    if (req.userId === 'mock-user-id') {
+      // Handle mock user for demo mode
+      user = { username: 'Demo User' };
     } else {
-      post.likes.splice(likeIndex, 1);
+      user = await User.findById(req.userId);
+      if (!user) return res.status(401).json("User not found");
     }
 
+    const likeIndex = (post.likes || []).findIndex((l) => l.userId === req.userId);
+    console.log('Like index for user:', likeIndex);
+    
+    if (likeIndex === -1) {
+      // User hasn't liked yet, add like
+      post.likes.push({ userId: req.userId, username: user.username });
+      console.log('Post liked by:', user.username);
+    } else {
+      // User already liked, remove like (unlike)
+      post.likes.splice(likeIndex, 1);
+      console.log('Post unliked by:', user.username);
+    }
+
+    console.log('New likes count:', post.likes?.length || 0);
     await post.save();
     res.json(post);
   } catch (err) {
+    console.error('Like post error:', err);
     res.status(500).json({
       message: "Server error",
       error: err?.message || String(err),
@@ -98,66 +117,20 @@ router.put("/posts/like/:id", auth, async (req, res) => {
 });
 
 // Comment
-router.post("/posts/comment/:id", auth, async (req, res) => {
-  try {
-    const post = await Post.findById(req.params.id);
-    if (!post) return res.status(404).json("Post not found");
-
-    const user = await User.findById(req.userId);
-    if (!user) return res.status(401).json("User not found");
-
-    const text = typeof req.body.text === "string" ? req.body.text : "";
-    if (!text.trim()) return res.status(400).json("Comment text is required");
-
-    post.comments.push({
-      userId: req.userId,
-      username: user.username,
-      text,
-    });
-
-    await post.save();
-    res.json(post);
-  } catch (err) {
-    res.status(500).json({
-      message: "Server error",
-      error: err?.message || String(err),
-    });
-  }
-});
-
-// Aliases for simpler frontend calls
-router.put("/like/:id", auth, async (req, res) => {
-  try {
-    const post = await Post.findById(req.params.id);
-    if (!post) return res.status(404).json("Post not found");
-
-    const user = await User.findById(req.userId);
-    if (!user) return res.status(401).json("User not found");
-
-    const likeIndex = (post.likes || []).findIndex((l) => l.userId === req.userId);
-    if (likeIndex === -1) {
-      post.likes.push({ userId: req.userId, username: user.username });
-    } else {
-      post.likes.splice(likeIndex, 1);
-    }
-
-    await post.save();
-    res.json(post);
-  } catch (err) {
-    res.status(500).json({
-      message: "Server error",
-      error: err?.message || String(err),
-    });
-  }
-});
-
 router.post("/comment/:id", auth, async (req, res) => {
   try {
+    console.log('POST /comment/:id - Commenting on post:', req.params.id);
     const post = await Post.findById(req.params.id);
     if (!post) return res.status(404).json("Post not found");
 
-    const user = await User.findById(req.userId);
-    if (!user) return res.status(401).json("User not found");
+    let user;
+    if (req.userId === 'mock-user-id') {
+      // Handle mock user for demo mode
+      user = { username: 'Demo User' };
+    } else {
+      user = await User.findById(req.userId);
+      if (!user) return res.status(401).json("User not found");
+    }
 
     const text = typeof req.body.text === "string" ? req.body.text : "";
     if (!text.trim()) return res.status(400).json("Comment text is required");
@@ -168,14 +141,78 @@ router.post("/comment/:id", auth, async (req, res) => {
       text,
     });
 
+    console.log('Comment added by:', user.username, '- Text:', text);
+
     await post.save();
     res.json(post);
   } catch (err) {
+    console.error('Comment error:', err);
     res.status(500).json({
       message: "Server error",
       error: err?.message || String(err),
     });
   }
 });
+
+// Get Comments for Post
+router.get("/comments/:id", async (req, res) => {
+  try {
+    console.log('GET /comments/:id - Fetching comments for post:', req.params.id);
+    const post = await Post.findById(req.params.id);
+    if (!post) return res.status(404).json("Post not found");
+
+    console.log(`Found ${post.comments?.length || 0} comments`);
+    res.json(post.comments || []);
+  } catch (err) {
+    console.error('Get comments error:', err);
+    res.status(500).json({
+      message: "Server error",
+      error: err?.message || String(err),
+    });
+  }
+});
+
+// Delete Comment
+router.delete("/comment/:postId/:commentIndex", auth, async (req, res) => {
+  try {
+    console.log('DELETE /comment/:postId/:commentIndex - Deleting comment:', req.params.postId, req.params.commentIndex);
+    const post = await Post.findById(req.params.postId);
+    if (!post) return res.status(404).json("Post not found");
+
+    const commentIndex = parseInt(req.params.commentIndex);
+    if (isNaN(commentIndex) || commentIndex < 0 || commentIndex >= post.comments.length) {
+      return res.status(400).json("Invalid comment index");
+    }
+
+    const comment = post.comments[commentIndex];
+    
+    // Check if user is the comment author or post author
+    let user;
+    if (req.userId === 'mock-user-id') {
+      user = { username: 'Demo User' };
+    } else {
+      user = await User.findById(req.userId);
+      if (!user) return res.status(401).json("User not found");
+    }
+
+    if (comment.userId !== req.userId && post.userId !== req.userId) {
+      return res.status(403).json("Not authorized to delete this comment");
+    }
+
+    post.comments.splice(commentIndex, 1);
+    await post.save();
+    
+    console.log('Comment deleted by:', user.username);
+    res.json(post);
+  } catch (err) {
+    console.error('Delete comment error:', err);
+    res.status(500).json({
+      message: "Server error",
+      error: err?.message || String(err),
+    });
+  }
+});
+
+// Aliases for simpler frontend calls - Remove duplicates since we already have the routes above
 
 module.exports = router;
