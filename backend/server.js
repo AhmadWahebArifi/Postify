@@ -17,26 +17,21 @@ const app = express();
 // CORS configuration
 const corsOptions = {
   origin: function (origin, callback) {
-    // In production, allow your specific frontend domain
-    if (process.env.NODE_ENV === 'production') {
-      const allowedOrigins = [
-        'https://postify-171qw35bm-ahmad-arifis-projects.vercel.app',
-        process.env.FRONTEND_URL
-      ].filter(Boolean);
-      
-      // Allow requests with no origin (like mobile apps or curl requests)
-      if (!origin) return callback(null, true);
-      
-      if (allowedOrigins.indexOf(origin) !== -1) {
-        callback(null, true);
-      } else {
-        console.log('CORS blocked origin:', origin);
-        console.log('Allowed origins:', allowedOrigins);
-        callback(new Error('Not allowed by CORS'));
-      }
-    } else {
-      // In development, allow all origins
+    const allowedOrigins = [
+      'https://postify-wine.vercel.app',
+      'https://postify-171qw35bm-ahmad-arifis-projects.vercel.app',
+      process.env.FRONTEND_URL
+    ].filter(Boolean);
+    
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV !== 'production') {
       callback(null, true);
+    } else {
+      console.log('CORS blocked origin:', origin);
+      console.log('Allowed origins:', allowedOrigins);
+      callback(new Error('Not allowed by CORS'));
     }
   },
   credentials: true,
@@ -56,8 +51,14 @@ app.use(express.urlencoded({
   extended: true 
 }));
 
-const authRoutes = require("./routes/auth");
-const postsRoutes = require("./routes/posts");
+app.use("/", authRoutes);
+app.use("/", postsRoutes);
+
+// Debug: Log all requests
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.path} - ${new Date().toISOString()}`);
+  next();
+});
 
 if (!process.env.MONGODB_URI) {
   console.error("Missing env: MONGODB_URI");
@@ -85,7 +86,6 @@ try {
 mongoose
   .connect(mongoUri, {
     serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of 10s
-    bufferMaxEntries: 0, // Disable mongoose buffering
     bufferCommands: false, // Disable mongoose buffering
   })
   .then(() => {
@@ -117,15 +117,6 @@ app.get("/test", (req, res) => {
     timestamp: new Date().toISOString(),
     env: process.env.NODE_ENV || 'development'
   });
-});
-
-app.use("/", authRoutes);
-app.use("/", postsRoutes);
-
-// Debug: Log all requests
-app.use((req, res, next) => {
-  console.log(`${req.method} ${req.path} - ${new Date().toISOString()}`);
-  next();
 });
 
 // 404 handler
