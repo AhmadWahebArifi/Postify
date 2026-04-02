@@ -15,11 +15,11 @@ app.use(cors());
 
 // Fix for Express 5.x - body parser configuration
 app.use(express.json({ 
-  limit: '5mb', // Reduced to 5MB for stability
+  limit: '50mb', // Increased for images
   type: 'application/json'
 }));
 app.use(express.urlencoded({ 
-  limit: '5mb', 
+  limit: '50mb', 
   extended: true 
 }));
 
