@@ -331,71 +331,68 @@ const CreatePost = () => {
                 </div>
               )}
 
-              <div className="mt-8 pt-6 border-t border-surface-container-low flex items-center justify-between">
-                <div className="flex items-center gap-1">
-                  <button className="w-10 h-10 flex items-center justify-center text-on-surface-variant hover:bg-surface-container-low rounded-lg transition-colors">
-                    <span className="material-symbols-outlined">image</span>
-                  </button>
-                  <button className="w-10 h-10 flex items-center justify-center text-on-surface-variant hover:bg-surface-container-low rounded-lg transition-colors">
-                    <span className="material-symbols-outlined">mood</span>
-                  </button>
-                </div>
+            <div className="mt-8 pt-6 border-t border-surface-container-low flex items-center justify-between">
+              <div className="flex items-center gap-1">
+                <button className="w-10 h-10 flex items-center justify-center text-on-surface-variant hover:bg-surface-container-low rounded-lg transition-colors">
+                  <span className="material-symbols-outlined">image</span>
+                </button>
+                <button className="w-10 h-10 flex items-center justify-center text-on-surface-variant hover:bg-surface-container-low rounded-lg transition-colors">
+                  <span className="material-symbols-outlined">mood</span>
+                </button>
               </div>
             </div>
+          </div>
+        </div>
 
-          <div className="col-span-12 lg:col-span-5">
-            <div className="sticky top-8 space-y-6">
-              <div>
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-bold tracking-tight">Live Preview</h3>
-                </div>
+        <div className="col-span-12 lg:col-span-5">
+          <div className="sticky top-8 space-y-6">
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold tracking-tight">Live Preview</h3>
+              </div>
 
-                <div className="bg-white rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.08)] overflow-hidden border border-surface-container-low">
-                  <div className="p-4 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <img
-                        alt="Profile"
-                        className="w-8 h-8 rounded-full border border-primary/20"
-                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuD_vwLH4IyCygkMrMHwu5pPiQnMS6p7L4N4gtG3mf3kYaJRFRswzxpEQfzispLR00-xnvwNDXEnbkRtTu9Zt2PZbQ6r5BvlXedTN5-Z7J5R3s1QplbCrNn8ZI-LaYSm9cr2QLw1HmSEtX5gSZ_GhqWSNivjj0BtUydVredMSnYe2YvuiPrt8PgzhRHay8pvyun61a-x3N7h5Oauzq0wtSkzWt_YiHYQICf4BflckSLNMUNSEJtmS_HSnHFdhAtnBVbTLFHdlqMM8dk"
-                      />
-                      <div>
-                        <p className="text-xs font-bold leading-none">Your Post</p>
-                        <p className="text-[10px] text-on-surface-variant mt-0.5">Just now</p>
-                      </div>
+              <div className="bg-white rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.08)] overflow-hidden border border-surface-container-low">
+                <div className="p-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <img
+                      alt="Profile"
+                      className="w-8 h-8 rounded-full border border-primary/20"
+                      src="https://lh3.googleusercontent.com/aida-public/AB6AXuD_vwLH4IyCygkMrMHwu5pPiQnMS6p7L4N4gtG3mf3kYaJRFRswzxpEQfzispLR00-xnvwNDXEnbkRtTu9Zt2PZbQ6r5BvlXedTN5-Z7J5R3s1QplbCrNn8ZI-LaYSm9cr2QLw1HmSEtX5gSZ_GhqWSNivjj0BtUydVredMSnYe2YvuiPrt8PgzhRHay8pvyun61a-x3N7h5Oauzq0wtSkzWt_YiHYQICf4BflckSLNMUNSEJtmS_HSnHFdhAtnBVbTLFHdlqMM8dk"
+                    />
+                    <div>
+                      <p className="text-xs font-bold leading-none">Your Post</p>
+                      <p className="text-[10px] text-on-surface-variant mt-0.5">Just now</p>
                     </div>
                   </div>
+                </div>
 
-                  {text && (
-                    <div className="px-4 pb-3">
-                      <p className="text-sm leading-relaxed">{text}</p>
-                    </div>
-                  )}
+                {text && (
+                  <div className="px-4 pb-3">
+                    <p className="text-sm leading-relaxed">{text}</p>
+                  </div>
+                )}
 
-                  {image && (
-                    <div className="aspect-square bg-surface-container-low flex items-center justify-center">
-                      <img
-                        alt="Preview"
-                        className="w-full h-full object-cover"
-                        src={image}
-                      />
-                    </div>
-                  )}
+                {image && (
+                  <div className="aspect-square bg-surface-container-low flex items-center justify-center">
+                    <img alt="Preview" className="w-full h-full object-cover" src={image} />
+                  </div>
+                )}
 
-                  <div className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <span className="material-symbols-outlined text-xl">favorite_border</span>
-                        <span className="material-symbols-outlined text-xl">chat_bubble_outline</span>
-                        <span className="material-symbols-outlined text-xl">send</span>
-                      </div>
-                      <span className="material-symbols-outlined text-xl">bookmark_border</span>
+                <div className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className="material-symbols-outlined text-xl">favorite_border</span>
+                      <span className="material-symbols-outlined text-xl">chat_bubble_outline</span>
+                      <span className="material-symbols-outlined text-xl">send</span>
                     </div>
+                    <span className="material-symbols-outlined text-xl">bookmark_border</span>
                   </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
+      </div>
       </main>
     </div>
   );
