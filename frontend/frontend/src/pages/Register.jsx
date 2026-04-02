@@ -6,6 +6,7 @@ import API from '../api';
 
 const Register = () => {
   const navigate = useNavigate();
+  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -18,8 +19,9 @@ const Register = () => {
     }
 
     try {
-      const res = await axios.post(`${API}/register`, { email, password });
+      const res = await axios.post(`${API}/register`, { username, email, password });
       localStorage.setItem('token', res.data.token);
+      localStorage.setItem('username', res.data.username);
       navigate('/feed');
     } catch (error) {
       console.error('Register failed:', error);
@@ -49,6 +51,27 @@ const Register = () => {
         {/* Register Card */}
         <div className="surface-container-lowest glass-effect rounded-xl shadow-[0_12px_40px_-12px_rgba(25,28,30,0.08)] p-10 border border-outline-variant/10">
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Username Field */}
+            <div className="space-y-2">
+              <label className="block text-xs font-bold tracking-widest text-on-surface-variant uppercase pl-1" htmlFor="username">
+                Username
+              </label>
+              <div className="relative">
+                <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline text-xl">
+                  person
+                </span>
+                <input
+                  className="w-full pl-12 pr-4 py-3 bg-surface-container-low border border-outline-variant/20 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none text-on-surface placeholder:text-outline/60"
+                  id="username"
+                  type="text"
+                  placeholder="yourname"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+
             {/* Email Field */}
             <div className="space-y-2">
               <label className="block text-xs font-bold tracking-widest text-on-surface-variant uppercase pl-1" htmlFor="email">
