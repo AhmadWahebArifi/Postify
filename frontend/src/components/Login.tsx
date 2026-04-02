@@ -55,10 +55,10 @@ export default function Login() {
         }
         localStorage.setItem('token', 'mock-token-' + Date.now())
         localStorage.setItem('user', JSON.stringify(mockUser))
-        alert('Backend unavailable - using demo mode')
+        console.log('Backend unavailable - using demo mode')
         navigate('/')
       } else {
-        alert(error?.response?.data?.message || error?.response?.data || 'Authentication failed')
+        console.error('Authentication failed:', error?.response?.data?.message || error?.response?.data || 'Authentication failed')
       }
       setIsLoading(false)
     }
@@ -136,7 +136,7 @@ export default function Login() {
             >
               {isLoading ? (
                 <>
-                  <span className="material-symbols-outlined loading-spinner">refresh</span>
+                  <div className="loading-spinner"></div>
                   {isRegistering ? 'Creating account...' : 'Signing in...'}
                 </>
               ) : (
