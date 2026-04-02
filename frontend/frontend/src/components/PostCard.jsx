@@ -1,16 +1,31 @@
 import React, { useMemo, useState } from 'react';
 
-const PostCard = ({ post, onLike, onComment }) => {
+const PostCard = ({ post, onLike, onComment, onDeleteComment }) => {
   const [commentText, setCommentText] = useState('');
 
   const likeCount = post.likes?.length || 0;
   const commentCount = post.comments?.length || 0;
 
   const isLikedByMe = useMemo(() => {
-    const username = localStorage.getItem('username');
-    if (!username) return false;
-    return (post.likes || []).some((l) => l?.username === username);
+    const token = localStorage.getItem('token');
+    if (!token) return false;
+    
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const currentUserId = user.id || user.userId;
+    
+    if (!currentUserId) return false;
+    return (post.likes || []).some((l) => l?.userId === currentUserId);
   }, [post.likes]);
+
+  const canDeleteComment = (comment) => {
+    const token = localStorage.getItem('token');
+    if (!token) return false;
+    
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const currentUserId = user.id || user.userId;
+    
+    return comment.userId === currentUserId;
+  };
 
   const handleSubmitComment = async (e) => {
     e.preventDefault();
@@ -66,6 +81,32 @@ const PostCard = ({ post, onLike, onComment }) => {
           Send
         </button>
       </form>
+
+      {/* Display comments */}
+      {post.comments && post.comments.length > 0 && (
+        <div className="mt-4 space-y-2">
+          {post.comments.map((comment, index) => (
+            <div key={index} className="bg-gray-50 rounded-lg p-3 relative">
+              <div className="flex justify-between items-start">
+                <div className="font-medium text-sm text-gray-900">{comment.username}</div>
+                {canDeleteComment(comment) && (
+                  <button
+                    onClick={() => onDeleteComment && onDeleteComment(post._id, index)}
+                    className="text-red-500 hover:text-red-700 p-1"
+                    title="Delete comment"
+                  >
+                    <span className="material-symbols-outlined text-sm">delete</span>
+                  </button>
+                )}
+              </div>
+              <div className="text-sm text-gray-700 mt-1">{comment.text}</div>
+              <div className="text-xs text-gray-500 mt-1">
+                {new Date(comment.createdAt).toLocaleString()}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
