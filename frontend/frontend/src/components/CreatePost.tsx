@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import API from '../api'
+import './CreatePost.css'
 
 export default function CreatePost() {
   const navigate = useNavigate()
@@ -117,91 +118,105 @@ export default function CreatePost() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-white">
+    <div className="createpost-container">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-10 backdrop-blur-xl bg-white/90">
-        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
+      <header className="createpost-header">
+        <div className="createpost-header-content">
           <button 
             onClick={() => navigate('/')}
-            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+            className="back-button"
           >
             <span className="material-symbols-outlined">arrow_back</span>
-            <span>Back to Home</span>
+            Back to Feed
           </button>
-          <h1 className="text-2xl font-bold text-gray-900">Create Post</h1>
-          <div className="w-16"></div>
+          <button 
+            onClick={() => {
+              localStorage.removeItem('token')
+              localStorage.removeItem('user')
+              navigate('/login')
+            }}
+            className="logout-button"
+          >
+            <span className="material-symbols-outlined">logout</span>
+            Logout
+          </button>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="max-w-4xl mx-auto px-4 py-8">
-        <form onSubmit={handleSubmit} className="space-y-8">
-          {/* User Info */}
-          <div className="flex items-center gap-4 pb-8">
-            <img 
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuCggTpFIL8KvpnYNPuxFANvscDLzSyx0epIZE19Y6pTbg8IA2l_UEfkwg2C33CpXaf4gd1uJ6euWNHtJVaVEciZTBAPsdbFWe0kIB32MqJ0Asx3K9Klwikmb7q8sjjbqH-7sFdhi318YCQ88dJo8uuwvSl71xtHiy_f_c33jgSJREE-ajXjyKZmLlTrLj2ZL3w1nrp4hqMGgjV2ggDVgGTM5nIxxbf7MygLAtrEr9Z9SvQLZ_fII38x_G4xCrx3NliW49U8UV2K4CQ"
-              alt="Your avatar"
-              className="w-14 h-14 rounded-full object-cover ring-2 ring-indigo-100"
-            />
-            <div>
-              <h3 className="font-bold text-gray-900 text-lg">Your Name</h3>
-              <p className="text-sm text-gray-500">Share your thoughts with the community</p>
-            </div>
+      <main className="createpost-main">
+        <form onSubmit={handleSubmit} className="createpost-form">
+          <div className="form-header">
+            <h1 className="createpost-title">Create New Post</h1>
+            <p className="createpost-subtitle">Share your thoughts with the community</p>
           </div>
-
-          {/* Content Input */}
-          <div className="bg-white rounded-3xl shadow-lg border border-gray-100 p-8 focus-within:ring-2 focus-within:ring-indigo-500 focus-within:border-transparent transition-all">
+          
+          <div className="form-group">
+            <label htmlFor="content" className="form-label">
+              What's on your mind?
+            </label>
             <textarea
+              id="content"
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              placeholder="What's on your mind? Share your thoughts, ideas, or updates with the community..."
-              className="w-full min-h-[200px] resize-none border-none focus:ring-0 text-gray-900 placeholder-gray-400 text-xl leading-relaxed"
-              maxLength={500}
+              className="form-textarea"
+              placeholder="Share your thoughts, ideas, or anything interesting..."
+              required
             />
-            <div className="text-right text-sm text-gray-500 mt-4">
-              {content.length}/500 characters
+            <div className={`character-count ${content.length > 500 ? 'error' : content.length > 400 ? 'warning' : ''}`}>
+              {content.length}/500
             </div>
           </div>
 
-          {/* Image Upload */}
-          <div className="bg-white rounded-3xl shadow-lg border border-gray-100 p-8">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="font-bold text-lg text-gray-900">Add Image</h3>
-              <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">Optional</span>
-            </div>
+          <div className="image-upload-section">
+            <label htmlFor="image-upload" className="image-upload-label">
+              <span className="material-symbols-outlined image-upload-icon">add_photo_alternate</span>
+              <span className="image-upload-text">Click to upload an image</span>
+              <span className="image-upload-hint">PNG, JPG, GIF up to 10MB</span>
+            </label>
+            <input
+              id="image-upload"
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              className="image-input"
+            />
             
-            {selectedImage ? (
-              <div className="relative">
+            {selectedImage && (
+              <div className="image-preview">
                 <img 
                   src={selectedImage} 
-                  alt="Selected image"
-                  className="w-full h-96 object-cover rounded-2xl"
+                  alt="Preview" 
+                  className="image-preview-img"
                 />
                 <button
                   type="button"
                   onClick={() => setSelectedImage(null)}
-                  className="absolute top-4 right-4 bg-red-500 text-white p-3 rounded-full hover:bg-red-600 transition-colors shadow-lg"
+                  className="remove-image-button"
                 >
                   <span className="material-symbols-outlined">close</span>
                 </button>
               </div>
-            ) : (
-              <label className="block cursor-pointer">
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  className="hidden"
-                />
-                <div className="border-3 border-dashed border-gray-300 rounded-2xl p-12 text-center hover:border-indigo-500 hover:bg-indigo-50 transition-all">
-                  <span className="material-symbols-outlined text-6xl text-gray-400 mb-4">add_photo_alternate</span>
-                  <p className="text-xl text-gray-600 font-medium mb-2">Click to upload an image</p>
-                  <p className="text-sm text-gray-500">PNG, JPG, GIF up to 10MB</p>
-                </div>
-              </label>
             )}
           </div>
 
+          <button
+            type="submit"
+            disabled={isSubmitting || !content.trim()}
+            className="submit-button"
+          >
+            {isSubmitting ? (
+              <>
+                <span className="material-symbols-outlined loading-spinner">refresh</span>
+                Publishing...
+              </>
+            ) : (
+              <>
+                <span className="material-symbols-outlined">send</span>
+                Publish Post
+              </>
+            )}
+          </button>
           {/* Posting Options */}
           <div className="bg-white rounded-3xl shadow-lg border border-gray-100 p-8">
             <h3 className="font-bold text-lg text-gray-900 mb-6">Post Options</h3>
