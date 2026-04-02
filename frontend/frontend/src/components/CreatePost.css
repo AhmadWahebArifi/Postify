@@ -165,8 +165,8 @@
 
 .image-preview-img {
   width: 100%;
-  max-height: 20rem;
-  object-fit: cover;
+  max-height: none;
+  object-fit: contain;
   border-radius: 0.75rem;
 }
 
@@ -216,6 +216,64 @@
 
 .submit-button:disabled {
   opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.createpost-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.cancel-button {
+  flex: 1;
+  padding: 1rem 1.25rem;
+  border-radius: 0.75rem;
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  color: #374151;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cancel-button:hover:not(:disabled) {
+  background: #f9fafb;
+  border-color: #cbd5e1;
+  transform: translateY(-1px);
+}
+
+.cancel-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.publish-button {
+  flex: 1;
+  padding: 1rem 1.25rem;
+  border-radius: 0.75rem;
+  border: none;
+  background: linear-gradient(90deg, #4f46e5 0%, #7c3aed 100%);
+  color: #ffffff;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.publish-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 22px -12px rgba(79, 70, 229, 0.45);
+}
+
+.publish-button:disabled {
+  opacity: 0.55;
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
