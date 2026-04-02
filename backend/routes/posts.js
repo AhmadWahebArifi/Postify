@@ -139,6 +139,7 @@ router.post("/comment/:id", auth, async (req, res) => {
       userId: req.userId,
       username: user.username,
       text,
+      createdAt: new Date()
     });
 
     console.log('Comment added by:', user.username, '- Text:', text);
