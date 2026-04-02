@@ -83,9 +83,20 @@ try {
 }
 
 mongoose
-  .connect(mongoUri)
-  .then(() => console.log("DB connected"))
-  .catch((err) => console.error("DB connection error:", err));
+  .connect(mongoUri, {
+    serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of 10s
+    bufferMaxEntries: 0, // Disable mongoose buffering
+    bufferCommands: false, // Disable mongoose buffering
+  })
+  .then(() => {
+    console.log("✅ DB connected successfully");
+    console.log("MongoDB URI:", mongoUri.replace(/\/\/.*@/, '//***:***@')); // Hide credentials
+  })
+  .catch((err) => {
+    console.error("❌ DB connection error:", err);
+    console.error("Please check your MongoDB URI in environment variables");
+    // Don't exit the process, let the app run with limited functionality
+  });
 
 app.get("/", (req, res) => {
   res.json({ message: "Postify API running" });

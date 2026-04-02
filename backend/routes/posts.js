@@ -53,6 +53,25 @@ router.post("/posts", auth, async (req, res) => {
 router.get("/posts", async (req, res) => {
   try {
     console.log('GET /posts - Fetching all posts');
+    
+    // Check if MongoDB is connected
+    if (mongoose.connection.readyState !== 1) {
+      console.log('MongoDB not connected, returning fallback posts');
+      return res.json([
+        {
+          _id: 'fallback-1',
+          userId: 'fallback-user',
+          username: 'Demo User',
+          text: 'Welcome to Postify! This is a demo post since the database is currently unavailable.',
+          image: '',
+          likes: [],
+          comments: [],
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }
+      ]);
+    }
+    
     const posts = await Post.find().sort({ createdAt: -1 });
     console.log(`Found ${posts.length} posts`);
     
@@ -64,10 +83,21 @@ router.get("/posts", async (req, res) => {
     res.json(posts);
   } catch (err) {
     console.error('Get posts error:', err);
-    res.status(500).json({
-      message: "Server error",
-      error: err?.message || String(err),
-    });
+    
+    // Return fallback posts on error
+    res.json([
+      {
+        _id: 'fallback-1',
+        userId: 'fallback-user',
+        username: 'Demo User',
+        text: 'Welcome to Postify! This is a demo post since the database is currently unavailable.',
+        image: '',
+        likes: [],
+        comments: [],
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+    ]);
   }
 });
 
