@@ -45,7 +45,7 @@ const PostCard = ({ post, onLike, onComment, onDeleteComment }) => {
       {post.text && <p className="text-gray-800 mb-4 whitespace-pre-wrap">{post.text}</p>}
 
       {post.image && (
-        <img src={post.image} alt="Post" className="w-full rounded-lg mb-4" />
+        <img src={post.image} alt="Post" className="w-full rounded-lg mb-4 object-contain" style={{ maxHeight: 'none' }} />
       )}
 
       <div className="flex items-center gap-6 mb-4">
