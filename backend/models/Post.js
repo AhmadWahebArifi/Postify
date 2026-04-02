@@ -2,12 +2,19 @@ const mongoose = require("mongoose");
 
 const postSchema = new mongoose.Schema({
   userId: String,
-  text: String,
-  image: String,
-  likes: [String],
+  username: String,
+  text: { type: String, default: "" },
+  image: { type: String, default: "" },
+  likes: [
+    {
+      userId: String,
+      username: String,
+    },
+  ],
   comments: [
     {
       userId: String,
+      username: String,
       text: String,
     }
   ],
