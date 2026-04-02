@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import API from '../api'
+import SpinLoader from './SpinLoader'
+import './LandingPage.css'
 
 interface Post {
   id: string
@@ -12,8 +14,17 @@ interface Post {
     avatar: string
   }
   timestamp: string
-  likes: number
-  comments: number
+  likes: Array<{ userId: string; username: string }>
+  comments: Array<{ userId: string; username: string; text: string; createdAt: string }>
+  likedByUser?: boolean
+  commentsList?: Comment[]
+}
+
+interface Comment {
+  userId: string
+  username: string
+  text: string
+  createdAt: string
 }
 
 const mockPosts: Post[] = [
@@ -26,8 +37,8 @@ const mockPosts: Post[] = [
       avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCggTpFIL8KvpnYNPuxFANvscDLzSyx0epIZE19Y6pTbg8IA2l_UEfkwg2C33CpXaf4gd1uJ6euWNHtJVaVEciZTBAPsdbFWe0kIB32MqJ0Asx3K9Klwikmb7q8sjjbqH-7sFdhi318YCQ88dJo8uuwvSl71xtHiy_f_c33jgSJREE-ajXjyKZmLlTrLj2ZL3w1nrp4hqMGgjV2ggDVgGTM5nIxxbf7MygLAtrEr9Z9SvQLZ_fII38x_G4xCrx3NliW49U8UV2K4CQ'
     },
     timestamp: '2 hours ago',
-    likes: 42,
-    comments: 8
+    likes: [],
+    comments: []
   },
   {
     id: '2',
@@ -37,8 +48,8 @@ const mockPosts: Post[] = [
       avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDaAV3CQzCDHbrOl5zV7b_rqAsXnAN7izAx9HQqwIOrWOOeBMSBvTaVg45RI5dq54VDw2OQ3ZKAvJzgqdVv6xV1IvKv0kZSofSO205PEVnJO1LNd5gfhpN5vD4mqoczpXDE5yASMlwlf4fYl4foSORFwqHwSWXtwPn5I6SIUDCcMtfKgUr5cElNHK9S-6MG490i0p-NrIcwVOuatfaPWNtsod5cZOu-v66NZv_5l0zdjT_jCeoBSfcaRtI2htx379xv4mSrjYUVvGE'
     },
     timestamp: '5 hours ago',
-    likes: 28,
-    comments: 5
+    likes: [],
+    comments: []
   },
   {
     id: '3',
@@ -49,50 +60,282 @@ const mockPosts: Post[] = [
       avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCggTpFIL8KvpnYNPuxFANvscDLzSyx0epIZE19Y6pTbg8IA2l_UEfkwg2C33CpXaf4gd1uJ6euWNHtJVaVEciZTBAPsdbFWe0kIB32MqJ0Asx3K9Klwikmb7q8sjjbqH-7sFdhi318YCQ88dJo8uuwvSl71xtHiy_f_c33jgSJREE-ajXjyKZmLlTrLj2ZL3w1nrp4hqMGgjV2ggDVgGTM5nIxxbf7MygLAtrEr9Z9SvQLZ_fII38x_G4xCrx3NliW49U8UV2K4CQ'
     },
     timestamp: '1 day ago',
-    likes: 67,
-    comments: 12
+    likes: [],
+    comments: []
   }
 ]
 
-function PostCard({ post }: { post: Post }) {
+function PostCard({ post, onUpdate }: { post: Post; onUpdate: () => void }) {
+  const [likes, setLikes] = useState(post.likes?.length || 0)
+  const [comments, setComments] = useState(post.comments?.length || 0)
+  const [isLiked, setIsLiked] = useState(post.likedByUser || false)
+  const [showComments, setShowComments] = useState(false)
+  const [newComment, setNewComment] = useState('')
+  const [commentsList, setCommentsList] = useState<Comment[]>(post.commentsList || post.comments || [])
+  const [loadingComments, setLoadingComments] = useState(false)
+
+  const handleLike = async () => {
+    try {
+      const token = localStorage.getItem('token')
+      if (!token) {
+        alert('Please login to like posts')
+        return
+      }
+
+      // Get current user info for proper identification
+      const user = JSON.parse(localStorage.getItem('user') || '{}')
+      const currentUserId = user.id || user.userId
+      
+      console.log('Current user ID:', currentUserId)
+      console.log('Post likes:', post.likes)
+      
+      // Check if already liked by this user
+      const wasLiked = post.likes?.some((like: any) => like.userId === currentUserId)
+      console.log('Was liked:', wasLiked)
+      
+      // Toggle like state
+      setIsLiked(!wasLiked)
+      setLikes(wasLiked ? likes - 1 : likes + 1)
+
+      // Call API to like/unlike
+      await axios.put(`${API}/like/${post.id}`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      
+      console.log('Like API call completed')
+      
+      // Update parent to refresh posts
+      onUpdate()
+    } catch (error) {
+      console.error('Failed to like post:', error)
+      // Revert on error
+      setIsLiked(isLiked)
+      setLikes(isLiked ? likes + 1 : likes - 1)
+    }
+  }
+
+  const handleComment = async () => {
+    if (!newComment.trim()) return
+
+    try {
+      const token = localStorage.getItem('token')
+      if (!token) {
+        alert('Please login to comment')
+        return
+      }
+
+      const user = JSON.parse(localStorage.getItem('user') || '{}')
+      
+      // Optimistic UI update
+      const commentData: Comment = {
+        userId: user.id,
+        username: user.username || 'Anonymous',
+        text: newComment,
+        createdAt: new Date().toISOString()
+      }
+      
+      setCommentsList(prev => [...prev, commentData])
+      setComments(comments + 1)
+      setNewComment('')
+
+      await axios.post(`${API}/comment/${post.id}`, {
+        text: newComment
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      
+      // Update parent to refresh posts
+      onUpdate()
+    } catch (error) {
+      console.error('Failed to comment:', error)
+      // Revert on error
+      setCommentsList(prev => prev.slice(0, -1))
+      setComments(comments - 1)
+    }
+  }
+
+  const loadComments = async () => {
+    if (!showComments && commentsList.length === 0) {
+      setLoadingComments(true)
+      try {
+        const res = await axios.get(`${API}/comments/${post.id}`)
+        setCommentsList(res.data)
+      } catch (error) {
+        console.error('Failed to load comments:', error)
+      } finally {
+        setLoadingComments(false)
+      }
+    }
+    setShowComments(!showComments)
+  }
+
+  const handleDeleteComment = async (commentIndex: number) => {
+    try {
+      const token = localStorage.getItem('token')
+      if (!token) {
+        alert('Please login to delete comments')
+        return
+      }
+
+      await axios.delete(`${API}/comment/${post.id}/${commentIndex}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      
+      // Remove comment from local state
+      setCommentsList(prev => prev.filter((_, index) => index !== commentIndex))
+      setComments(comments - 1)
+      
+      // Update parent to refresh posts
+      onUpdate()
+    } catch (error) {
+      console.error('Failed to delete comment:', error)
+      alert('Failed to delete comment')
+    }
+  }
+
+  const canDeleteComment = (comment: Comment) => {
+    const token = localStorage.getItem('token')
+    if (!token) return false
+    
+    const user = JSON.parse(localStorage.getItem('user') || '{}')
+    const currentUserId = user.id || user.userId
+    
+    return comment.userId === currentUserId
+  }
+
+  const handleShare = () => {
+    if (navigator.share) {
+      navigator.share({
+        title: 'Post from Postify',
+        text: post.content,
+        url: window.location.href
+      })
+    } else {
+      // Fallback: copy to clipboard
+      navigator.clipboard.writeText(`${post.content} - ${window.location.href}`)
+      alert('Post link copied to clipboard!')
+    }
+  }
+
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition-shadow">
-      <div className="p-6">
-        <div className="flex items-center gap-3 mb-4">
+    <div className="postcard">
+      <div className="postcard-content">
+        <div className="postcard-header">
           <img 
             src={post.author.avatar} 
             alt={post.author.name}
-            className="w-10 h-10 rounded-full object-cover"
+            className="postcard-avatar"
           />
-          <div>
-            <h4 className="font-semibold text-gray-900">{post.author.name}</h4>
-            <p className="text-sm text-gray-500">{post.timestamp}</p>
+          <div className="postcard-author-info">
+            <h4>{post.author.name}</h4>
+            <p>{post.timestamp}</p>
           </div>
         </div>
         
-        <p className="text-gray-800 mb-4 leading-relaxed">{post.content}</p>
+        <p className="postcard-text">{post.content}</p>
         
         {post.image && (
           <img 
             src={post.image} 
             alt="Post image"
-            className="w-full h-64 object-cover rounded-xl mb-4"
+            className="postcard-image"
           />
         )}
         
-        <div className="flex items-center gap-6 text-gray-500">
-          <button className="flex items-center gap-2 hover:text-red-500 transition-colors">
-            <span className="material-symbols-outlined">favorite_border</span>
-            <span className="text-sm">{post.likes}</span>
+        <div className="postcard-actions">
+          <button 
+            onClick={handleLike}
+            className={`postcard-action-button ${isLiked ? 'liked' : ''}`}
+          >
+            <span className="material-symbols-outlined">
+              {isLiked ? 'favorite' : 'favorite_border'}
+            </span>
+            <span className="postcard-action-count">{likes}</span>
           </button>
-          <button className="flex items-center gap-2 hover:text-blue-500 transition-colors">
+          <button 
+            onClick={loadComments}
+            className="postcard-action-button comment"
+          >
             <span className="material-symbols-outlined">chat_bubble_outline</span>
-            <span className="text-sm">{post.comments}</span>
+            <span className="postcard-action-count">{comments}</span>
           </button>
-          <button className="flex items-center gap-2 hover:text-green-500 transition-colors">
+          <button 
+            onClick={handleShare}
+            className="postcard-action-button share"
+          >
             <span className="material-symbols-outlined">share</span>
+            <span className="postcard-action-count">Share</span>
           </button>
         </div>
+
+        {showComments && (
+          <div className="comments-section">
+            {/* Display existing comments */}
+            {commentsList.length > 0 && (
+              <div className="comments-list" style={{ marginBottom: '1rem' }}>
+                {commentsList.map((comment, index) => (
+                  <div key={index} className="comment-item" style={{ 
+                    padding: '0.75rem', 
+                    backgroundColor: '#f9fafb', 
+                    borderRadius: '0.5rem', 
+                    marginBottom: '0.5rem',
+                    position: 'relative'
+                  }}>
+                    <div style={{ fontWeight: '500', fontSize: '0.875rem', marginBottom: '0.25rem' }}>
+                      {comment.username}
+                      {canDeleteComment(comment) && (
+                        <button
+                          onClick={() => handleDeleteComment(index)}
+                          style={{
+                            float: 'right',
+                            background: 'none',
+                            border: 'none',
+                            color: '#ef4444',
+                            cursor: 'pointer',
+                            fontSize: '0.75rem',
+                            padding: '0.25rem'
+                          }}
+                          title="Delete comment"
+                        >
+                          <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>delete</span>
+                        </button>
+                      )}
+                    </div>
+                    <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+                      {comment.text}
+                    </div>
+                    <div style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: '0.25rem' }}>
+                      {new Date(comment.createdAt).toLocaleString()}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            {loadingComments && (
+              <div style={{ textAlign: 'center', padding: '1rem' }}>
+                <SpinLoader size="small" text="Loading comments..." />
+              </div>
+            )}
+            
+            <div className="comment-input-container">
+              <input
+                type="text"
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                placeholder="Add a comment..."
+                className="comment-input"
+                onKeyPress={(e) => e.key === 'Enter' && handleComment()}
+              />
+              <button
+                onClick={handleComment}
+                className="comment-submit-button"
+              >
+                Post
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
@@ -103,39 +346,35 @@ export default function LandingPage() {
   const [posts, setPosts] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
 
-  // Fetch posts from API
-  useEffect(() => {
-    fetchPosts()
-  }, [])
-
-  // Check for newly created post in localStorage
-  useEffect(() => {
-    const newPost = localStorage.getItem('newPost')
-    if (newPost) {
-      const parsedPost = JSON.parse(newPost)
-      setPosts(prev => [parsedPost, ...prev])
-      localStorage.removeItem('newPost')
-    }
-  }, [])
-
   const fetchPosts = async () => {
     try {
       console.log('Fetching posts from API:', `${API}/posts`)
       const res = await axios.get(`${API}/posts`)
       console.log('Posts fetched from API:', res.data)
       
-      const formattedPosts = res.data.map((post: any) => ({
-        id: post._id,
-        content: post.text,
-        image: post.image,
-        author: {
-          name: post.username,
-          avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCggTpFIL8KvpnYNPuxFANvscDLzSyx0epIZE19Y6pTbg8IA2l_UEfkwg2C33CpXaf4gd1uJ6euWNHtJVaVEciZTBAPsdbFWe0kIB32MqJ0Asx3K9Klwikmb7q8sjjbqH-7sFdhi318YCQ88dJo8uuwvSl71xtHiy_f_c33jgSJREE-ajXjyKZmLlTrLj2ZL3w1nrp4hqMGgjV2ggDVgGTM5nIxxbf7MygLAtrEr9Z9SvQLZ_fII38x_G4xCrx3NliW49U8UV2K4CQ'
-        },
-        timestamp: new Date(post.createdAt).toLocaleString(),
-        likes: post.likes?.length || 0,
-        comments: post.comments?.length || 0
-      }))
+      const token = localStorage.getItem('token')
+      const currentUserId = token ? (JSON.parse(localStorage.getItem('user') || '{}').id || JSON.parse(localStorage.getItem('user') || '{}').userId) : null
+      
+      const formattedPosts = res.data.map((post: any) => {
+        // Check if current user liked this post
+        const likedByUser = currentUserId && post.likes?.some((like: any) => like.userId === currentUserId)
+        
+        return {
+          id: post._id,
+          content: post.text,
+          image: post.image,
+          author: {
+            name: post.username,
+            avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCggTpFIL8KvpnYNPuxFANvscDLzSyx0epIZE19Y6pTbg8IA2l_UEfkwg2C33CpXaf4gd1uJ6euWNHtJVaVEciZTBAPsdbFWe0kIB32MqJ0Asx3K9Klwikmb7q8sjjbqH-7sFdhi318YCQ88dJo8uuwvSl71xtHiy_f_c33jgSJREE-ajXjyKZmLlTrLj2ZL3w1nrp4hqMGgjV2ggDVgGTM5nIxxbf7MygLAtrEr9Z9SvQLZ_fII38x_G4xCrx3NliW49U8UV2K4CQ'
+          },
+          timestamp: new Date(post.createdAt).toLocaleString(),
+          likes: post.likes || [],
+          comments: post.comments || [],
+          likedByUser,
+          commentsList: post.comments || []
+        }
+      })
+      
       setPosts(formattedPosts)
       console.log('Formatted posts set:', formattedPosts)
     } catch (error: any) {
@@ -149,243 +388,135 @@ export default function LandingPage() {
     }
   }
 
+  useEffect(() => {
+    fetchPosts()
+    
+    // Check for new post from localStorage
+    const newPost = localStorage.getItem('newPost')
+    if (newPost) {
+      const parsedPost = JSON.parse(newPost)
+      setPosts(prev => [parsedPost, ...prev])
+      localStorage.removeItem('newPost')
+    }
+  }, [])
+
   const handleLogout = () => {
     // Clear any authentication data
     localStorage.removeItem('token')
     localStorage.removeItem('user')
-    
-    // Navigate to login page
     navigate('/login')
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Top Navigation */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-xl flex items-center justify-between px-8 h-16 border-b border-gray-100">
-        <div className="flex items-center gap-8">
-          <span className="text-xl font-bold tracking-tighter text-gray-900">Postify</span>
-          <nav className="hidden md:flex gap-6 items-center">
-            <Link to="/" className="text-indigo-600 font-bold border-b-2 border-indigo-600 text-sm py-1">Home</Link>
-            <a href="#features" className="text-gray-600 hover:text-indigo-600 transition-colors text-sm py-1">Features</a>
-            <a href="#about" className="text-gray-600 hover:text-indigo-600 transition-colors text-sm py-1">About</a>
-          </nav>
+    <div className="landingpage-container">
+      {/* Navigation Bar */}
+      <nav className="navbar">
+        <div className="navbar-content">
+          <Link to="/" className="navbar-brand">
+            <span className="material-symbols-outlined navbar-icon">auto_awesome</span>
+            Postify
+          </Link>
+          <div className="navbar-actions">
+            <Link to="/create-post" className="navbar-link">
+              <span className="material-symbols-outlined">add_circle</span>
+              Create New Post
+            </Link>
+            <button onClick={handleLogout} className="logout-button">
+              <span className="material-symbols-outlined">logout</span>
+              Logout
+            </button>
+          </div>
         </div>
-        <div className="flex items-center gap-4">
-          <div className="hidden md:flex items-center bg-gray-100 px-3 py-1.5 rounded-full">
-            <span className="material-symbols-outlined text-sm text-gray-500 pr-2">search</span>
-            <input 
-              className="bg-transparent border-none focus:ring-0 text-sm w-48 text-gray-900 p-0" 
-              placeholder="Search posts..." 
-              type="text"
+      </nav>
+
+      {/* Hero Section */}
+      <section className="hero-section">
+        <div className="hero-content">
+          <div className="hero-text">
+            <div className="hero-badge">
+              <span className="material-symbols-outlined">auto_awesome</span>
+              NEW: MULTI-PLATFORM SYNC
+            </div>
+            <h1 className="hero-title">
+              Elevate your <br/><span className="highlight">social presence</span>
+            </h1>
+            <p className="hero-description">
+              The professional workspace for digital curators. Draft, schedule, and analyze your content across all platforms with atmospheric precision.
+            </p>
+            <div className="hero-actions">
+              <Link to="/create-post" className="hero-button">
+                <span className="material-symbols-outlined">add_circle</span>
+                Create New Post
+              </Link>
+            </div>
+          </div>
+          <div className="hero-image">
+            <img 
+              alt="Dashboard Preview" 
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuDLzwp4eS1IPrVw11A70eRqpb89ivwmaKbvS_8qYNswUjdCIDgy57iyozciZ6V9vDrpzIdpBc3jbzSaAIbwO1f3nbpqPpRaI_NTESmnLkJa-n2A56qFdVY41tPifGhflFuUOvWgxEYufIufFyQxJAPAI69vWmVD98FwUD-j0oxanO8Behefn4I8AQsj6goy3e6OmeVMzR3nsHf8BCk-KCfxIAGkiS3UmiOuOElK1DlsHp9RCqaSKHF1dkGAgMdcu4kRGkagT4kHhVc"
             />
+            <div className="hero-image-overlay">
+              <div className="hero-image-stats">
+                <div className="stat-card">
+                  <div className="stat-number">2.5M+</div>
+                  <div className="stat-label">Active Users</div>
+                </div>
+                <div className="stat-card">
+                  <div className="stat-number">50M+</div>
+                  <div className="stat-label">Posts Created</div>
+                </div>
+                <div className="stat-card">
+                  <div className="stat-number">100+</div>
+                  <div className="stat-label">Platforms</div>
+                </div>
+                <div className="stat-card">
+                  <div className="stat-number">99.9%</div>
+                  <div className="stat-label">Uptime</div>
+                </div>
+              </div>
+            </div>
           </div>
-          <button className="material-symbols-outlined text-gray-500 p-2 hover:bg-gray-100 rounded-full transition-colors">
-            notifications
-          </button>
+        </div>
+      </section>
+
+      {/* Posts Feed Section */}
+      <section className="posts-section">
+        <div className="posts-header">
+          <h2 className="posts-title">Latest Posts</h2>
+          <p className="posts-description">See what our community is sharing on their home feed</p>
           <button 
-            onClick={handleLogout}
-            className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
+            onClick={fetchPosts}
+            className="refresh-button"
           >
-            <span className="material-symbols-outlined">logout</span>
-            <span className="hidden md:block">Logout</span>
+            🔄 Refresh Posts
           </button>
         </div>
-      </header>
-
-      <main className="pt-16">
-        {/* Hero Section */}
-        <section className="relative overflow-hidden pt-24 pb-20 px-6 bg-gradient-to-br from-indigo-50 to-white">
-          <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-            <div className="space-y-8">
-              <div className="inline-flex items-center gap-2 px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-xs font-semibold tracking-wide">
-                <span className="material-symbols-outlined text-sm">auto_awesome</span>
-                NEW: MULTI-PLATFORM SYNC
+        
+        <div className="posts-container">
+          <div className="posts-grid">
+            {loading ? (
+              <div className="loading-state">
+                <SpinLoader size="large" text="Loading posts..." />
               </div>
-              <h1 className="text-5xl md:text-7xl font-extrabold tracking-tighter text-gray-900 leading-[1.1]">
-                Elevate your <br/><span className="text-indigo-600">social presence</span>
-              </h1>
-              <p className="text-xl text-gray-600 max-w-xl leading-relaxed">
-                The professional workspace for digital curators. Draft, schedule, and analyze your content across all platforms with atmospheric precision.
-              </p>
-              <div className="flex flex-wrap gap-4 pt-4">
-                <Link to="/create-post" className="bg-indigo-600 text-white px-8 py-4 rounded-xl font-semibold hover:bg-indigo-700 transition-colors flex items-center gap-2">
-                  <span className="material-symbols-outlined">add_circle</span>
-                  Create New Post
-                </Link>
+            ) : posts.length > 0 ? (
+              posts.map((post) => (
+                <PostCard key={post.id} post={post} onUpdate={fetchPosts} />
+              ))
+            ) : (
+              <div className="empty-state">
+                <span className="material-symbols-outlined empty-icon">chat_bubble_outline</span>
+                <p className="empty-text">No posts yet. Be the first to share something!</p>
               </div>
-            </div>
-            <div className="relative">
-              <div className="aspect-square bg-gradient-to-tr from-indigo-100 to-blue-100 rounded-[2rem] overflow-hidden shadow-2xl">
-                <img 
-                  alt="Dashboard Preview" 
-                  className="w-full h-full object-cover mix-blend-overlay opacity-60" 
-                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuDLzwp4eS1IPrVw11A70eRqpb89ivwmaKbvS_8qYNswUjdCIDgy57iyozciZ6V9vDrpzIdpBc3jbzSaAIbwO1f3nbpqPpRaI_NTESmnLkJa-n2A56qFdVY41tPifGhflFuUOvWgxEYufIufFyQxJAPAI69vWmVD98FwUD-j0oxanO8Behefn4I8AQsj6goy3e6OmeVMzR3nsHf8BCk-KCfxIAGkiS3UmiOuOElK1DlsHp9RCqaSKHF1dkGAgMdcu4kRGkagT4kHhVc"
-                />
-                <div className="absolute inset-0 flex items-center justify-center p-8">
-                  <div className="bg-white/90 backdrop-blur-xl p-6 rounded-2xl shadow-xl w-full max-w-sm space-y-4">
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 bg-indigo-100 rounded-lg flex items-center justify-center text-indigo-600">
-                        <span className="material-symbols-outlined">schedule</span>
-                      </div>
-                      <div>
-                        <div className="text-sm font-bold">Upcoming Post</div>
-                        <div className="text-xs text-gray-500">Scheduled for 10:00 AM</div>
-                      </div>
-                    </div>
-                    <div className="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
-                      <div className="h-full w-2/3 bg-indigo-600 rounded-full"></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+            )}
           </div>
-        </section>
-
-        {/* Features Bento Grid */}
-        <section id="features" className="py-24 px-6 bg-gray-50">
-          <div className="max-w-7xl mx-auto">
-            <div className="text-center mb-16 space-y-4">
-              <h2 className="text-3xl font-bold tracking-tight">Purpose-built for growth</h2>
-              <p className="text-gray-600 max-w-2xl mx-auto">Skip the clutter. Postify provides the exact tools you need to master your digital footprint without the noise.</p>
+          
+          {posts.length > 0 && (
+            <div className="load-more-container">
+              <button className="load-more-button">Load More Posts</button>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <div className="bg-white p-10 rounded-[2rem] space-y-6 hover:translate-y-[-4px] transition-transform duration-300 shadow-sm">
-                <div className="h-12 w-12 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center">
-                  <span className="material-symbols-outlined" style={{fontVariationSettings: "'FILL' 1"}}>calendar_month</span>
-                </div>
-                <h3 className="text-xl font-bold">Smart Scheduling</h3>
-                <p className="text-gray-600 leading-relaxed">
-                  AI-driven timing suggestions that ensure your content hits the feed when your audience is most active.
-                </p>
-              </div>
-              <div className="bg-white p-10 rounded-[2rem] space-y-6 hover:translate-y-[-4px] transition-transform duration-300 shadow-sm">
-                <div className="h-12 w-12 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center">
-                  <span className="material-symbols-outlined" style={{fontVariationSettings: "'FILL' 1"}}>query_stats</span>
-                </div>
-                <h3 className="text-xl font-bold">Depth Analytics</h3>
-                <p className="text-gray-600 leading-relaxed">
-                  Go beyond likes. Track conversion paths, sentiment analysis, and long-term retention metrics effortlessly.
-                </p>
-              </div>
-              <div className="bg-white p-10 rounded-[2rem] space-y-6 hover:translate-y-[-4px] transition-transform duration-300 shadow-sm">
-                <div className="h-12 w-12 bg-orange-100 text-orange-600 rounded-2xl flex items-center justify-center">
-                  <span className="material-symbols-outlined" style={{fontVariationSettings: "'FILL' 1"}}>hub</span>
-                </div>
-                <h3 className="text-xl font-bold">Multi-Platform Support</h3>
-                <p className="text-gray-600 leading-relaxed">
-                  One workspace for LinkedIn, Instagram, X, and TikTok. Tailor your message for each platform in seconds.
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Posts Feed Section */}
-        <section className="py-24 px-6 bg-white">
-          <div className="max-w-4xl mx-auto">
-            <div className="text-center mb-16 space-y-4">
-              <h2 className="text-4xl font-extrabold tracking-tight">Latest Posts</h2>
-              <p className="text-gray-600">See what our community is sharing on their home feed</p>
-              <button 
-                onClick={fetchPosts}
-                className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors text-sm"
-              >
-                🔄 Refresh Posts
-              </button>
-            </div>
-            
-            <div className="space-y-6">
-              {loading ? (
-                <div className="text-center py-12">
-                  <span className="material-symbols-outlined text-4xl text-gray-400 animate-spin">refresh</span>
-                  <p className="text-gray-500 mt-4">Loading posts...</p>
-                </div>
-              ) : posts.length > 0 ? (
-                posts.map((post) => (
-                  <PostCard key={post.id} post={post} />
-                ))
-              ) : (
-                <div className="text-center py-12">
-                  <span className="material-symbols-outlined text-4xl text-gray-400">post_add</span>
-                  <p className="text-gray-500 mt-4">No posts yet. Be the first to create one!</p>
-                </div>
-              )}
-            </div>
-            
-            <div className="text-center mt-12">
-              <button className="bg-indigo-600 text-white px-8 py-3 rounded-xl font-semibold hover:bg-indigo-700 transition-colors">
-                Load More Posts
-              </button>
-            </div>
-          </div>
-        </section>
-      </main>
-
-      {/* Footer */}
-      <footer className="bg-white pt-24 pb-12 px-6 border-t border-gray-100">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-12 mb-16">
-            <div className="col-span-2 space-y-6">
-              <span className="text-2xl font-bold tracking-tighter">Postify</span>
-              <p className="text-gray-600 text-sm max-w-xs leading-relaxed">
-                The ultimate social architecture for modern brands and creators. Designed for clarity, built for results.
-              </p>
-              <div className="flex gap-4">
-                <a className="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-indigo-100 hover:text-indigo-600 transition-all" href="#">
-                  <span className="material-symbols-outlined text-sm">public</span>
-                </a>
-                <a className="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-indigo-100 hover:text-indigo-600 transition-all" href="#">
-                  <span className="material-symbols-outlined text-sm">alternate_email</span>
-                </a>
-              </div>
-            </div>
-            <div className="space-y-4">
-              <p className="font-bold text-sm">Product</p>
-              <ul className="space-y-2 text-sm text-gray-600">
-                <li><a className="hover:text-indigo-600" href="#">Scheduler</a></li>
-                <li><a className="hover:text-indigo-600" href="#">Analytics</a></li>
-                <li><a className="hover:text-indigo-600" href="#">Integrations</a></li>
-                <li><a className="hover:text-indigo-600" href="#">Changelog</a></li>
-              </ul>
-            </div>
-            <div className="space-y-4">
-              <p className="font-bold text-sm">Company</p>
-              <ul className="space-y-2 text-sm text-gray-600">
-                <li><a className="hover:text-indigo-600" href="#">About Us</a></li>
-                <li><a className="hover:text-indigo-600" href="#">Careers</a></li>
-                <li><a className="hover:text-indigo-600" href="#">Blog</a></li>
-                <li><a className="hover:text-indigo-600" href="#">Press</a></li>
-              </ul>
-            </div>
-            <div className="space-y-4">
-              <p className="font-bold text-sm">Support</p>
-              <ul className="space-y-2 text-sm text-gray-600">
-                <li><a className="hover:text-indigo-600" href="#">Help Center</a></li>
-                <li><a className="hover:text-indigo-600" href="#">Status</a></li>
-                <li><a className="hover:text-indigo-600" href="#">Privacy</a></li>
-                <li><a className="hover:text-indigo-600" href="#">Terms</a></li>
-              </ul>
-            </div>
-            <div className="space-y-4">
-              <p className="font-bold text-sm">Resources</p>
-              <ul className="space-y-2 text-sm text-gray-600">
-                <li><a className="hover:text-indigo-600" href="#">Guides</a></li>
-                <li><a className="hover:text-indigo-600" href="#">Webinars</a></li>
-                <li><a className="hover:text-indigo-600" href="#">Podcast</a></li>
-              </ul>
-            </div>
-          </div>
-          <div className="flex flex-col md:flex-row justify-between items-center pt-12 border-t border-gray-100 gap-6">
-            <p className="text-xs text-gray-600">© 2024 Postify Inc. All rights reserved.</p>
-            <div className="flex items-center gap-6">
-              <a className="text-xs text-gray-600 hover:text-gray-900" href="#">Privacy Policy</a>
-              <a className="text-xs text-gray-600 hover:text-gray-900" href="#">Cookies</a>
-              <a className="text-xs text-gray-600 hover:text-gray-900" href="#">Security</a>
-            </div>
-          </div>
+          )}
         </div>
-      </footer>
+      </section>
     </div>
   )
 }
