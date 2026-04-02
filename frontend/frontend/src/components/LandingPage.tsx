@@ -208,16 +208,10 @@ export default function LandingPage() {
                 The professional workspace for digital curators. Draft, schedule, and analyze your content across all platforms with atmospheric precision.
               </p>
               <div className="flex flex-wrap gap-4 pt-4">
-                <Link 
-                  to="/create-post"
-                  className="bg-indigo-600 text-white px-8 py-4 rounded-xl font-semibold shadow-lg shadow-indigo-600/20 hover:scale-105 transition-transform inline-flex items-center gap-2"
-                >
+                <Link to="/create-post" className="bg-indigo-600 text-white px-8 py-4 rounded-xl font-semibold hover:bg-indigo-700 transition-colors flex items-center gap-2">
                   <span className="material-symbols-outlined">add_circle</span>
                   Create New Post
                 </Link>
-                <button className="bg-white text-gray-900 px-8 py-4 rounded-xl font-semibold hover:bg-gray-50 transition-colors border border-gray-200">
-                  View Live Demo
-                </button>
               </div>
             </div>
             <div className="relative">
