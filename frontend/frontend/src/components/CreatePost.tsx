@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import API from '../api'
+import Swal from 'sweetalert2'
 import './CreatePost.css'
 
 export default function CreatePost() {
@@ -29,21 +30,41 @@ export default function CreatePost() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!content.trim()) {
-      alert('Please write some content for your post')
+    const token = localStorage.getItem('token')
+    if (!token) {
+      await Swal.fire({
+        icon: 'warning',
+        title: 'Authentication Required',
+        text: 'Please login first to create a post',
+        confirmButtonColor: '#4F46E5'
+      })
+      navigate('/login')
       return
     }
 
-    const token = localStorage.getItem('token')
-    if (!token) {
-      alert('Please login first')
-      navigate('/login')
+    if (!content.trim() && !selectedImage) {
+      await Swal.fire({
+        icon: 'warning',
+        title: 'Content Required',
+        text: 'Post must contain text or image',
+        confirmButtonColor: '#4F46E5'
+      })
       return
     }
 
     setIsSubmitting(true)
     
     try {
+      Swal.fire({
+        title: 'Creating Post...',
+        html: 'Please wait while we publish your post',
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        didOpen: () => {
+          Swal.showLoading()
+        }
+      })
+
       console.log('Creating post with API:', `${API}/posts`)
       console.log('Token:', token.substring(0, 20) + '...')
       console.log('Has image:', !!selectedImage)
@@ -83,10 +104,18 @@ export default function CreatePost() {
       localStorage.setItem('newPost', JSON.stringify(newPost))
       
       // Show success message and navigate after a short delay
-      alert('Post created successfully!')
-      setTimeout(() => {
-        navigate('/')
-      }, 500)
+      setContent('')
+      setSelectedImage(null)
+
+      await Swal.fire({
+        icon: 'success',
+        title: 'Post Published!',
+        text: 'Your post has been successfully published',
+        timer: 2000,
+        showConfirmButton: false,
+        timerProgressBar: true
+      })
+      navigate('/')
     } catch (error: any) {
       console.error('Failed to create post:', error)
       console.error('Error response:', error?.response?.data)
@@ -108,10 +137,12 @@ export default function CreatePost() {
       
       localStorage.setItem('newPost', JSON.stringify(fallbackPost))
       
-      alert(`Backend error: ${error?.response?.data || error?.message}. Post saved locally.`)
-      setTimeout(() => {
-        navigate('/')
-      }, 500)
+      await Swal.fire({
+        icon: 'error',
+        title: 'Publishing Failed',
+        text: error?.response?.data?.message || error?.response?.data || error?.message || 'Failed to create post',
+        confirmButtonColor: '#4F46E5'
+      })
     } finally {
       setIsSubmitting(false)
     }
@@ -200,23 +231,6 @@ export default function CreatePost() {
             )}
           </div>
 
-          <button
-            type="submit"
-            disabled={isSubmitting || !content.trim()}
-            className="submit-button"
-          >
-            {isSubmitting ? (
-              <>
-                <span className="material-symbols-outlined loading-spinner">refresh</span>
-                Publishing...
-              </>
-            ) : (
-              <>
-                <span className="material-symbols-outlined">send</span>
-                Publish Post
-              </>
-            )}
-          </button>
           {/* Posting Options */}
           <div className="bg-white rounded-3xl shadow-lg border border-gray-100 p-8">
             <h3 className="font-bold text-lg text-gray-900 mb-6">Post Options</h3>
@@ -239,18 +253,19 @@ export default function CreatePost() {
           </div>
 
           {/* Submit Button */}
-          <div className="flex gap-6">
+          <div className="createpost-actions">
             <button
               type="button"
               onClick={() => navigate('/')}
-              className="flex-1 px-8 py-4 border-2 border-gray-300 text-gray-700 rounded-2xl font-bold hover:bg-gray-50 transition-colors text-lg"
+              className="cancel-button"
+              disabled={isSubmitting}
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={(!content.trim() && !selectedImage) || isSubmitting}
-              className="flex-1 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-8 py-4 rounded-2xl font-bold hover:from-indigo-700 hover:to-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 text-lg shadow-lg"
+              className="publish-button"
             >
               {isSubmitting ? (
                 <>
