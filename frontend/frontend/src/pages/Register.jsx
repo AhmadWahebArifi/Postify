@@ -1,19 +1,30 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import API from '../api';
 
 const Register = () => {
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // TODO: Implement registration logic
     if (password !== confirmPassword) {
       alert('Passwords do not match');
       return;
     }
-    console.log('Register attempt:', { email, password });
+
+    try {
+      const res = await axios.post(`${API}/register`, { email, password });
+      localStorage.setItem('token', res.data.token);
+      navigate('/feed');
+    } catch (error) {
+      console.error('Register failed:', error);
+      alert('Register failed. Try a different email.');
+    }
   };
 
   return (
