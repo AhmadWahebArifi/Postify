@@ -14,6 +14,7 @@ const Login = () => {
     try {
       const res = await axios.post(`${API}/login`, { email, password });
       localStorage.setItem("token", res.data.token);
+      localStorage.setItem("username", res.data.username);
       console.log('Login successful:', res.data);
       navigate('/feed');
     } catch (error) {
