@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import API from '../api'
+import './Login.css'
 
 export default function Login() {
   const navigate = useNavigate()
@@ -64,26 +65,26 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-white flex items-center justify-center px-4">
-      <div className="max-w-md w-full space-y-8">
+    <div className="login-container">
+      <div className="login-form-wrapper">
         {/* Header */}
-        <div className="text-center">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Postify</h1>
-          <p className="text-gray-600">Sign in to your account</p>
+        <div className="login-header">
+          <h1 className="login-title">Postify</h1>
+          <p className="login-subtitle">Sign in to your account</p>
         </div>
 
         {/* Login Form */}
-        <div className="bg-white rounded-2xl shadow-xl p-8">
-          <div className="text-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">
+        <div className="login-form">
+          <div className="form-header">
+            <h2 className="form-title">
               {isRegistering ? 'Create Account' : 'Sign In'}
             </h2>
           </div>
           
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit}>
             {isRegistering && (
-              <div>
-                <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2">
+              <div className="form-group">
+                <label htmlFor="username" className="form-label">
                   Username
                 </label>
                 <input
@@ -91,15 +92,15 @@ export default function Login() {
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-colors"
+                  className="form-input"
                   placeholder="Choose a username"
                   required={isRegistering}
                 />
               </div>
             )}
 
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+            <div className="form-group">
+              <label htmlFor="email" className="form-label">
                 Email
               </label>
               <input
@@ -107,14 +108,14 @@ export default function Login() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-colors"
+                className="form-input"
                 placeholder="Enter your email"
                 required
               />
             </div>
 
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+            <div className="form-group">
+              <label htmlFor="password" className="form-label">
                 Password
               </label>
               <input
@@ -122,7 +123,7 @@ export default function Login() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-colors"
+                className="form-input"
                 placeholder="Enter your password"
                 required
               />
@@ -131,11 +132,11 @@ export default function Login() {
             <button
               type="submit"
               disabled={isLoading || !email || !password || (isRegistering && !username)}
-              className="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="submit-button"
             >
               {isLoading ? (
                 <>
-                  <span className="material-symbols-outlined animate-spin">refresh</span>
+                  <span className="material-symbols-outlined loading-spinner">refresh</span>
                   {isRegistering ? 'Creating account...' : 'Signing in...'}
                 </>
               ) : (
@@ -144,13 +145,13 @@ export default function Login() {
             </button>
           </form>
 
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
+          <div className="toggle-link">
+            <p className="toggle-text">
               {isRegistering ? 'Already have an account?' : "Don't have an account?"}{' '}
               <button 
                 type="button"
                 onClick={() => setIsRegistering(!isRegistering)}
-                className="text-indigo-600 hover:text-indigo-700 font-medium"
+                className="toggle-button"
               >
                 {isRegistering ? 'Sign In' : 'Sign Up'}
               </button>
