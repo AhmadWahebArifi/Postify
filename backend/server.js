@@ -17,21 +17,26 @@ const app = express();
 // CORS configuration
 const corsOptions = {
   origin: function (origin, callback) {
-    const allowedOrigins = [
-      'http://localhost:5173',
-      'http://localhost:3000',
-      'http://localhost:5174',
-      process.env.FRONTEND_URL
-    ].filter(Boolean);
-    
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
-    
-    if (allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
+    // In production, allow your specific frontend domain
+    if (process.env.NODE_ENV === 'production') {
+      const allowedOrigins = [
+        'https://postify-171qw35bm-ahmad-arifis-projects.vercel.app',
+        process.env.FRONTEND_URL
+      ].filter(Boolean);
+      
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true);
+      
+      if (allowedOrigins.indexOf(origin) !== -1) {
+        callback(null, true);
+      } else {
+        console.log('CORS blocked origin:', origin);
+        console.log('Allowed origins:', allowedOrigins);
+        callback(new Error('Not allowed by CORS'));
+      }
     } else {
-      console.log('CORS blocked origin:', origin);
-      callback(new Error('Not allowed by CORS'));
+      // In development, allow all origins
+      callback(null, true);
     }
   },
   credentials: true,
