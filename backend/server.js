@@ -72,17 +72,18 @@ if (!process.env.JWT_SECRET) {
   process.exit(1);
 }
 
-let mongoUri = process.env.MONGODB_URI;
+let mongoUri = process.env.MONGODB_URI?.trim();
 try {
-  const parsed = new URL(mongoUri);
-  const hasDbName = parsed.pathname && parsed.pathname !== "/";
-  if (!hasDbName) {
-    parsed.pathname = "/postify";
-    mongoUri = parsed.toString();
+  if (mongoUri) {
+    const parsed = new URL(mongoUri);
+    const hasDbName = parsed.pathname && parsed.pathname !== "/";
+    if (!hasDbName) {
+      parsed.pathname = "/postify";
+      mongoUri = parsed.toString();
+    }
   }
 } catch (err) {
-  console.error("Invalid MONGODB_URI:", err?.message || err);
-  process.exit(1);
+  console.error("Invalid MONGODB_URI format:", err?.message || err);
 }
 
 // Remove unnecessary code
@@ -119,10 +120,14 @@ const PORT = process.env.PORT || 5000;
 const startServer = async () => {
   let server;
   try {
-    await mongoose.connect(mongoUri, {
-      serverSelectionTimeoutMS: 5000,
+    const connectionOptions = {
+      serverSelectionTimeoutMS: 15000,
+      family: 4,
       bufferCommands: false,
-    });
+    };
+
+    console.log("Attempting to connect to MongoDB...");
+    await mongoose.connect(mongoUri, connectionOptions);
     console.log("✅ DB connected successfully");
     
     server = app.listen(PORT, '0.0.0.0', () => {
