@@ -85,20 +85,7 @@ try {
   process.exit(1);
 }
 
-mongoose
-  .connect(mongoUri, {
-    serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of 10s
-    bufferCommands: false, // Disable mongoose buffering
-  })
-  .then(() => {
-    console.log("✅ DB connected successfully");
-    console.log("MongoDB URI:", mongoUri.replace(/\/\/.*@/, '//***:***@')); // Hide credentials
-  })
-  .catch((err) => {
-    console.error("❌ DB connection error:", err);
-    console.error("Please check your MongoDB URI in environment variables");
-    // Don't exit the process, let the app run with limited functionality
-  });
+// Remove unnecessary code
 
 app.get("/", (req, res) => {
   res.json({ message: "Postify API running" });
@@ -129,22 +116,41 @@ app.use((req, res) => {
 
 const PORT = process.env.PORT || 5000;
 
-const server = app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
-});
+const startServer = async () => {
+  let server;
+  try {
+    await mongoose.connect(mongoUri, {
+      serverSelectionTimeoutMS: 5000,
+      bufferCommands: false,
+    });
+    console.log("✅ DB connected successfully");
+    
+    server = app.listen(PORT, '0.0.0.0', () => {
+      console.log(`Server running on port ${PORT}`);
+      console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+    });
+  } catch (err) {
+    console.error("❌ DB connection error:", err);
+    console.log("Starting server anyway with limited functionality...");
+    server = app.listen(PORT, '0.0.0.0', () => {
+      console.log(`Server running on port ${PORT} (DB disconnected)`);
+    });
+  }
 
-// Handle graceful shutdown
-process.on('SIGTERM', () => {
-  console.log('SIGTERM received, shutting down gracefully');
-  server.close(() => {
-    console.log('Process terminated');
+  // Handle graceful shutdown
+  process.on('SIGTERM', () => {
+    console.log('SIGTERM received, shutting down gracefully');
+    server.close(() => {
+      console.log('Process terminated');
+    });
   });
-});
 
-process.on('SIGINT', () => {
-  console.log('SIGINT received, shutting down gracefully');
-  server.close(() => {
-    console.log('Process terminated');
+  process.on('SIGINT', () => {
+    console.log('SIGINT received, shutting down gracefully');
+    server.close(() => {
+      console.log('Process terminated');
+    });
   });
-});
+};
+
+startServer();
