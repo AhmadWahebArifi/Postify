@@ -9,12 +9,23 @@ router.post("/posts", auth, async (req, res) => {
     const text = typeof req.body.text === "string" ? req.body.text : "";
     const image = typeof req.body.image === "string" ? req.body.image : "";
 
+    console.log('POST /posts - Creating post');
+    console.log('Text length:', text.length);
+    console.log('Has image:', !!image);
+    console.log('Image length:', image ? image.length : 0);
+
     if (!text.trim() && !image.trim()) {
       return res.status(400).json("Post must contain text or image");
     }
 
-    const user = await User.findById(req.userId);
-    if (!user) return res.status(401).json("User not found");
+    let user;
+    if (req.userId === 'mock-user-id') {
+      // Handle mock user for demo mode
+      user = { username: 'Demo User' };
+    } else {
+      user = await User.findById(req.userId);
+      if (!user) return res.status(401).json("User not found");
+    }
 
     const post = new Post({
       userId: req.userId,
@@ -26,8 +37,11 @@ router.post("/posts", auth, async (req, res) => {
     });
 
     await post.save();
+    console.log('Post saved to MongoDB with ID:', post._id);
+    console.log('Post has image:', !!post.image);
     res.json(post);
   } catch (err) {
+    console.error('Create post error:', err);
     res.status(500).json({
       message: "Server error",
       error: err?.message || String(err),
@@ -38,9 +52,18 @@ router.post("/posts", auth, async (req, res) => {
 // Get Feed
 router.get("/posts", async (req, res) => {
   try {
+    console.log('GET /posts - Fetching all posts');
     const posts = await Post.find().sort({ createdAt: -1 });
+    console.log(`Found ${posts.length} posts`);
+    
+    // Log image info for each post
+    posts.forEach((post, index) => {
+      console.log(`Post ${index + 1}: Has image: ${!!post.image}, Image length: ${post.image ? post.image.length : 0}`);
+    });
+    
     res.json(posts);
   } catch (err) {
+    console.error('Get posts error:', err);
     res.status(500).json({
       message: "Server error",
       error: err?.message || String(err),
