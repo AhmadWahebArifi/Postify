@@ -5,9 +5,23 @@ const { URL } = require("url");
 
 require("dotenv").config({ path: '.env.local' });
 
+// Debug: Check if environment variables are loaded
+console.log('Environment check:');
+console.log('MONGODB_URI:', process.env.MONGODB_URI ? 'SET' : 'NOT SET');
+console.log('JWT_SECRET:', process.env.JWT_SECRET ? 'SET' : 'NOT SET');
+
 const app = express();
 app.use(cors());
-app.use(express.json());
+
+// Fix for Express 5.x - body parser configuration
+app.use(express.json({ 
+  limit: '5mb', // Reduced to 5MB for stability
+  type: 'application/json'
+}));
+app.use(express.urlencoded({ 
+  limit: '5mb', 
+  extended: true 
+}));
 
 const authRoutes = require("./routes/auth");
 const postsRoutes = require("./routes/posts");
@@ -44,7 +58,27 @@ app.get("/", (req, res) => {
   res.json({ message: "Postify API running" });
 });
 
+app.get("/test", (req, res) => {
+  res.json({ 
+    message: "API test successful",
+    timestamp: new Date().toISOString(),
+    env: process.env.NODE_ENV || 'development'
+  });
+});
+
 app.use("/", authRoutes);
 app.use("/", postsRoutes);
+
+// Debug: Log all requests
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.path} - ${new Date().toISOString()}`);
+  next();
+});
+
+// 404 handler
+app.use((req, res) => {
+  console.log(`404 - Route not found: ${req.method} ${req.path}`);
+  res.status(404).json({ error: "Route not found", path: req.path });
+});
 
 app.listen(5000, () => console.log("Server running"));
